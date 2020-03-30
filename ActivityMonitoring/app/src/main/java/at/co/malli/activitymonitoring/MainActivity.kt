@@ -23,7 +23,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     companion object {
         private val TAG: String? = MainActivity::class.simpleName
-        const val RECORD_DELAY_S: Long = 5 //time in s until sensor values are saved in list
         val sensorDataList = LinkedList<SensorValue>() //static to survive orientation chg.
 
         const val STATE_STOPPED = 0
@@ -36,7 +35,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private lateinit var sm: SensorManager
-    private var recordPressedTime: Long = Long.MAX_VALUE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +51,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf( Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 REQUEST_EXTERNAL_STORAGE_PERMISSION
             );
         }
@@ -61,8 +59,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         applyState(null)
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>, grantResults: IntArray
+    ) {
         when (requestCode) {
             REQUEST_EXTERNAL_STORAGE_PERMISSION -> {
                 // If request is cancelled, the result arrays are empty.
@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                     Log.v(TAG, "Need to request external storage permission AGAIN.")
                     ActivityCompat.requestPermissions(
                         this,
-                        arrayOf( Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                        arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
                         REQUEST_EXTERNAL_STORAGE_PERMISSION
                     )
                 }
@@ -114,20 +114,16 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
-            if (recordPressedTime == Long.MAX_VALUE)
-                recordPressedTime = event.timestamp //set to first timestamp
-            if (event.timestamp > recordPressedTime + RECORD_DELAY_S * 1000 * 1000 * 1000) {
-                var type = -1
-                if(event.sensor.type == Sensor.TYPE_LINEAR_ACCELERATION)
-                    type = MY_SENSORTYPE_ACC
-                else if(event.sensor.type == Sensor.TYPE_ROTATION_VECTOR)
-                    type = MY_SENSORTYPE_ROT
-                sensorDataList.add(
-                    SensorValue(
-                        type, event.values[0], event.values[1], event.values[2], event.timestamp
-                    )
+            var type = -1
+            if (event.sensor.type == Sensor.TYPE_LINEAR_ACCELERATION)
+                type = MY_SENSORTYPE_ACC
+            else if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR)
+                type = MY_SENSORTYPE_ROT
+            sensorDataList.add(
+                SensorValue(
+                    type, event.values[0], event.values[1], event.values[2], event.timestamp
                 )
-            }
+            )
         }
     }
 
@@ -145,22 +141,15 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         val path = File(getExternalFilesDir(null), "$lastTimestamp.csv")
         val fOutStream = OutputStreamWriter(FileOutputStream(path))
         Log.v(TAG, "Opened file for writing: $path")
-        Log.v(TAG, "sensorDataList has ${sensorDataList.size} entries")
-        var cnt = 0
         for (data in sensorDataList) {
-            if (data.timestamp < lastTimestamp - RECORD_DELAY_S * 1000 * 1000 * 1000) {
-                //do not save data of last x seconds...
-                val str = "${data.type}, ${data.x}, ${data.y}, ${data.z}, ${data.timestamp}\n"
-                fOutStream.write(str)
-                cnt++
-            }
+            val str = "${data.type}, ${data.x}, ${data.y}, ${data.z}, ${data.timestamp}\n"
+            fOutStream.write(str)
         }
         fOutStream.flush()
         fOutStream.close()
-        Log.v(TAG, "Finished writing $cnt entries.")
+        Log.v(TAG, "sensorDataList had ${sensorDataList.size} entries.")
 
         sensorDataList.clear()
-        recordPressedTime = Long.MAX_VALUE
     }
 
 }
