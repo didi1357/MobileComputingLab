@@ -41,16 +41,16 @@ def preprocess_csv_data(parsed_data):
 #     if current_file.endswith(".csv"):
 #         plot_file('training_files/' + current_file)
 
-CURRENT_FILE = 'sitting_1.csv'
+CURRENT_FILE = 'jogging_3.csv'
 
-parsed = pd.read_csv('training_files/' + CURRENT_FILE)
+parsed = pd.read_csv('files/' + CURRENT_FILE)
 time, data = preprocess_csv_data(parsed)
 plot_file(CURRENT_FILE, time, data)
 
 # START_TIME = 0
 # STOP_TIME = START_TIME + 1
 
-# output_path = 'training_preprocessed/' + CURRENT_FILE
+# output_path = 'testing_preprocessed/' + CURRENT_FILE
 # with open(output_path, 'w') as file_handle:
 #     for i in range(len(time)):
 #         if START_TIME * MEAS_DATA_TIMESCALE < time[i] < STOP_TIME * MEAS_DATA_TIMESCALE:

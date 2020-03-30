@@ -1,12 +1,14 @@
 package at.co.malli.activitymonitoring
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.os.PowerManager
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -16,7 +18,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.util.*
-import at.co.malli.activitymonitoring.R
 
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
@@ -35,6 +36,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private lateinit var sm: SensorManager
+    private lateinit var wakeLock: PowerManager.WakeLock
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +57,12 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                 REQUEST_EXTERNAL_STORAGE_PERMISSION
             );
         }
+
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "MyApp::MyWakelockTag"
+        )
 
         applyState(null)
     }
@@ -105,6 +113,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         sm.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST)
         sm.registerListener(this, rotation, SensorManager.SENSOR_DELAY_FASTEST)
         applyState(STATE_RECORDING)
+        wakeLock.acquire()
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
@@ -150,6 +159,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         Log.v(TAG, "sensorDataList had ${sensorDataList.size} entries.")
 
         sensorDataList.clear()
+        wakeLock.release()
     }
 
 }
