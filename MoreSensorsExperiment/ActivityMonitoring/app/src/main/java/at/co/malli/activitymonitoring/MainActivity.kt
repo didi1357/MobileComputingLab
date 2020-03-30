@@ -31,6 +31,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         var currentState: Int = STATE_STOPPED
 
         const val REQUEST_EXTERNAL_STORAGE_PERMISSION = 1
+        const val MY_SENSORTYPE_ACC = 0
+        const val MY_SENSORTYPE_ROT = 1
     }
 
     private lateinit var sm: SensorManager
@@ -106,8 +108,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     fun recordPressed(view: View) {
         Log.v(TAG, "recordPressed")
-        val accelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        val accelerometer = sm.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+        val rotation = sm.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         sm.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST)
+        sm.registerListener(this, rotation, SensorManager.SENSOR_DELAY_FASTEST)
         applyState(STATE_RECORDING)
         wakeLock.acquire()
     }
@@ -119,9 +123,14 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
+            var type = -1
+            if (event.sensor.type == Sensor.TYPE_LINEAR_ACCELERATION)
+                type = MY_SENSORTYPE_ACC
+            else if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR)
+                type = MY_SENSORTYPE_ROT
             sensorDataList.add(
                 SensorValue(
-                    event.values[0], event.values[1], event.values[2], event.timestamp
+                    type, event.values[0], event.values[1], event.values[2], event.timestamp
                 )
             )
         }
@@ -142,7 +151,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         val fOutStream = OutputStreamWriter(FileOutputStream(path))
         Log.v(TAG, "Opened file for writing: $path")
         for (data in sensorDataList) {
-            val str = "${data.timestamp}, ${data.x}, ${data.y}, ${data.z}\n"
+            val str = "${data.type}, ${data.x}, ${data.y}, ${data.z}, ${data.timestamp}\n"
             fOutStream.write(str)
         }
         fOutStream.flush()
