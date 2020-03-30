@@ -24,8 +24,15 @@ def my_parse_csv(file_path):
     parsed = pd.read_csv(file_path)
     time_data = []
     unified_data = []
+    first_time = parsed.values[0][0]
+    remove_first_time = False
+    if first_time / MEAS_DATA_TIMESCALE > 10:
+        remove_first_time = True  # shift times to 0 if first_time is > 10s upon load
     for i in range(len(parsed)):
-        time_data.append(parsed.values[i][0])
+        if remove_first_time:
+            time_data.append(parsed.values[i][0] - first_time)
+        else:
+            time_data.append(parsed.values[i][0])
         unified_data.append(parsed.values[i][1:])
     return time_data, np.transpose(unified_data)
 
