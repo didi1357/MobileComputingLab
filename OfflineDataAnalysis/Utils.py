@@ -54,16 +54,3 @@ def feature_vector(transposed_data):
                      acc_x_min, acc_y_min, acc_z_min,
                      acc_x_max, acc_y_max, acc_z_max,
                      acc_x_var, acc_y_var, acc_z_var])
-
-
-def load_features():
-    learned_features = dict()
-    for class_name in CLASSES:
-        feats = np.zeros([1, 24])
-        for file_nr in range(NR_TRAINING_FILES):
-            cur_time, cur_data = my_parse_csv('training_files/{}_{}.csv'.format(class_name, file_nr))
-            feats += feature_vector(cur_data)
-        np.divide(feats, NR_TRAINING_FILES)
-        learned_features[class_name] = feats
-
-    return learned_features
