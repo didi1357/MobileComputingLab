@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 MEAS_DATA_TIMESCALE = 1000 * 1000 * 1000  # ns/s
-CLASSES = ['downstairs', 'jogging', 'sitting', 'upstairs', 'walking']
+CLASSES = ['upstairs', 'downstairs', 'walking', 'jogging', 'sitting', 'standing']
 NR_TRAINING_FILES = 3
 
 
@@ -26,8 +26,8 @@ def my_parse_csv(file_path):
     unified_data = []
     first_time = parsed.values[0][0]
     remove_first_time = False
-    if first_time / MEAS_DATA_TIMESCALE > 10:
-        remove_first_time = True  # shift times to 0 if first_time is > 10s upon load
+    if first_time / MEAS_DATA_TIMESCALE > 0.25:
+        remove_first_time = True  # shift times to 0 if first_time is > 0.25s upon load
     for i in range(len(parsed)):
         if remove_first_time:
             time_data.append(parsed.values[i][0] - first_time)
@@ -54,3 +54,21 @@ def feature_vector(transposed_data):
                      acc_x_min, acc_y_min, acc_z_min,
                      acc_x_max, acc_y_max, acc_z_max,
                      acc_x_var, acc_y_var, acc_z_var])
+
+
+def feature_vectors(time_data, transposed_data, window_length=0.5):
+    un_transposed = np.transpose(transposed_data)
+
+    features = []
+    next_window = 1
+    begin_index = 0
+    for current_index in range(len(time_data)):
+        current_time = time_data[current_index] / MEAS_DATA_TIMESCALE
+        if current_time > window_length * next_window:
+            current_data_window = un_transposed[begin_index:current_index]
+            transposed_again = np.transpose(current_data_window)
+            features.append(feature_vector(transposed_again))
+            begin_index = current_index
+            next_window += 1
+
+    return features
