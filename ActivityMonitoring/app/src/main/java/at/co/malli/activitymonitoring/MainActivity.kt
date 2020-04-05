@@ -76,6 +76,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             );
         }
 
+        externalFilesDir = getExternalFilesDir(null)
+
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(
             PowerManager.PARTIAL_WAKE_LOCK,
@@ -85,8 +87,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         val accelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         sm.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST)
         wakeLock.acquire()
-
-        externalFilesDir = getExternalFilesDir(null)
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -130,5 +130,11 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                 )
             )
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        sm.unregisterListener(this)
+        wakeLock.release()
     }
 }

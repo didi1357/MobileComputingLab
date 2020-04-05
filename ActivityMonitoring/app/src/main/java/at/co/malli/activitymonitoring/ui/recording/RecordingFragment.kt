@@ -1,9 +1,5 @@
 package at.co.malli.activitymonitoring.ui.recording
 
-import android.app.Dialog
-import android.content.DialogInterface
-import android.hardware.Sensor
-import android.hardware.SensorManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,12 +11,9 @@ import androidx.lifecycle.ViewModelProviders
 import at.co.malli.activitymonitoring.MainActivity.Companion.externalFilesDir
 import at.co.malli.activitymonitoring.MainActivity.Companion.sensorDataList
 import at.co.malli.activitymonitoring.R
-import at.co.malli.activitymonitoring.SensorValue
-import kotlinx.android.synthetic.main.fragment_recording.*
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
-import java.util.*
 
 
 class RecordingFragment : Fragment(), View.OnClickListener {
@@ -28,9 +21,9 @@ class RecordingFragment : Fragment(), View.OnClickListener {
     companion object {
         private val TAG: String? = RecordingFragment::class.simpleName
 
-        const val STATE_STOPPED = 0
+        const val STATE_NOT_RECORDING = 0
         const val STATE_RECORDING = 1
-        var currentState: Int = STATE_STOPPED
+        var currentState: Int = STATE_NOT_RECORDING
     }
 
     private lateinit var recordingViewModel: RecordingViewModel
@@ -52,7 +45,7 @@ class RecordingFragment : Fragment(), View.OnClickListener {
         recordButton.setOnClickListener(this)
         stopButton.setOnClickListener(this)
 
-        applyState()
+        applyState(null)
 
         return rootView
     }
@@ -80,10 +73,11 @@ class RecordingFragment : Fragment(), View.OnClickListener {
     fun recordPressed() {
         Log.v(TAG, "recordPressed")
         applyState(STATE_RECORDING)
+        sensorDataList.clear() //TODO: locking on sensorDataList
     }
 
     fun stopPressed() {
-        applyState(STATE_STOPPED)
+        applyState(STATE_NOT_RECORDING)
         Log.v(TAG, "stopPressed")
 
         if (sensorDataList.isEmpty()) {
@@ -102,7 +96,5 @@ class RecordingFragment : Fragment(), View.OnClickListener {
         fOutStream.flush()
         fOutStream.close()
         Log.v(TAG, "sensorDataList had ${sensorDataList.size} entries.")
-
-        sensorDataList.clear()
     }
 }
