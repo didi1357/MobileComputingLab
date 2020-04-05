@@ -10,30 +10,36 @@ import android.hardware.SensorManager
 import android.os.Bundle
 import android.os.PowerManager
 import android.util.Log
-import android.view.View
-import com.google.android.material.navigation.NavigationView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.app.ActivityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import androidx.drawerlayout.widget.DrawerLayout
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import androidx.core.app.ActivityCompat
+import at.co.malli.activitymonitoring.ui.recording.RecordingFragment
+import com.google.android.material.navigation.NavigationView
 import java.io.File
-import java.io.FileOutputStream
-import java.io.OutputStreamWriter
+import java.lang.StringBuilder
 import java.util.*
+import kotlin.collections.ArrayList
+
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
 
     companion object {
         private val TAG: String? = MainActivity::class.simpleName
-        val sensorDataList = LinkedList<SensorValue>() //static to survive orientation chg.
+        var classifier: KNNClassifier? = null
+        val sensorDataList = ArrayList<SensorValue>() //static to survive orientation chg.
         var externalFilesDir: File? = null
 
         const val REQUEST_EXTERNAL_STORAGE_PERMISSION = 1
+
+        const val APPROX_SENS_VAL_DELAY_MS = 5.0
+        const val DESIRED_WINDOW_MS = 1200.0
+        const val WINDOW_N: Int = (DESIRED_WINDOW_MS / APPROX_SENS_VAL_DELAY_MS).toInt()
     }
 
     private lateinit var sm: SensorManager
@@ -60,8 +66,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-        sm = getSystemService(SENSOR_SERVICE) as SensorManager
-
         if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
             == PackageManager.PERMISSION_GRANTED
         ) {
@@ -78,12 +82,13 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
         externalFilesDir = getExternalFilesDir(null)
 
+        classifier = KNNClassifier(applicationContext.assets.open("windowed.json"))
+        sm = getSystemService(SENSOR_SERVICE) as SensorManager
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(
             PowerManager.PARTIAL_WAKE_LOCK,
             "MyApp::MyWakelockTag"
         )
-
         val accelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         sm.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST)
         wakeLock.acquire()
@@ -129,6 +134,19 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                     event.values[0], event.values[1], event.values[2], event.timestamp
                 )
             )
+            if (RecordingFragment.currentState == RecordingFragment.STATE_NOT_RECORDING) {
+                //run calculations only if not recording :)
+                if (sensorDataList.size > WINDOW_N) {
+                    val vector = classifier!!.calculateFeatureVector(sensorDataList)
+                    val probabilities = classifier!!.classify(vector)
+                    var probtext = StringBuilder()
+                    for (i in 0 until probabilities.size) {
+                        probtext.append("${KNNClassifier.CLASSES[i]}: ${probabilities[i]*100}%, ")
+                    }
+                    Log.d(TAG, "Probs: ${probtext.toString()}")
+                    sensorDataList.clear()
+                }
+            }
         }
     }
 

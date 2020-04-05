@@ -85,7 +85,7 @@ class RecordingFragment : Fragment(), View.OnClickListener {
             return
         }
 
-        val lastTimestamp = sensorDataList.last.timestamp
+        val lastTimestamp = sensorDataList[sensorDataList.lastIndex].timestamp
         val path = File(externalFilesDir, "$lastTimestamp.csv")
         val fOutStream = OutputStreamWriter(FileOutputStream(path))
         Log.v(TAG, "Opened file for writing: $path")
