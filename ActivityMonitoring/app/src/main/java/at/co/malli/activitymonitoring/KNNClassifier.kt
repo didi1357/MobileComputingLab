@@ -55,18 +55,18 @@ class KNNClassifier(assetInputStream: InputStream) {
         return sqrt(sumOfSquares / trainVector.values.size.toDouble())
     }
 
-    fun classify(testFeature: FeatureVector): ArrayList<Double> {
+    fun classify(testFeature: FeatureVector): ArrayList<Float> {
         var distances = ArrayList<DistanceClassPair>()
         for (cntFeat in 0 until featureVectors.size) {
             val currentDistance = calculateEuclideanDistance(featureVectors[cntFeat], testFeature)
             distances.add(DistanceClassPair(currentDistance, featureVectors[cntFeat].classNr))
         }
         distances.sort()
-        var probabilities = ArrayList<Double>()
+        var probabilities = ArrayList<Float>()
         for (cntClass in CLASSES.indices)
-            probabilities.add(0.0)
+            probabilities.add(0.0f)
         for (cntDist in 0 until kValue)
-            probabilities[distances[cntDist].classNr] += 1.0
+            probabilities[distances[cntDist].classNr] += 1.0f
         for (cntClass in CLASSES.indices)
             probabilities[cntClass] = probabilities[cntClass] / CLASSES.size
         return probabilities

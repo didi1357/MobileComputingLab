@@ -19,12 +19,10 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import at.co.malli.activitymonitoring.ui.home.HomeFragment
 import at.co.malli.activitymonitoring.ui.recording.RecordingFragment
 import com.google.android.material.navigation.NavigationView
 import java.io.File
-import java.lang.StringBuilder
-import java.util.*
-import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
@@ -38,7 +36,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         const val REQUEST_EXTERNAL_STORAGE_PERMISSION = 1
 
         const val APPROX_SENS_VAL_DELAY_MS = 5.0
-        const val DESIRED_WINDOW_MS = 1200.0
+        const val DESIRED_WINDOW_MS = 1200.0f
         const val WINDOW_N: Int = (DESIRED_WINDOW_MS / APPROX_SENS_VAL_DELAY_MS).toInt()
     }
 
@@ -83,6 +81,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         externalFilesDir = getExternalFilesDir(null)
 
         classifier = KNNClassifier(applicationContext.assets.open("windowed.json"))
+
         sm = getSystemService(SENSOR_SERVICE) as SensorManager
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(
@@ -139,11 +138,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                 if (sensorDataList.size > WINDOW_N) {
                     val vector = classifier!!.calculateFeatureVector(sensorDataList)
                     val probabilities = classifier!!.classify(vector)
-                    var probtext = StringBuilder()
-                    for (i in 0 until probabilities.size) {
-                        probtext.append("${KNNClassifier.CLASSES[i]}: ${probabilities[i]*100}%, ")
-                    }
-                    Log.d(TAG, "Probs: ${probtext.toString()}")
+                    HomeFragment.pushNewClassificationResult(probabilities)
                     sensorDataList.clear()
                 }
             }
