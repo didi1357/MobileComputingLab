@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 for class_name in CLASSES:
-    time_data, transposed_data = my_parse_csv('preprocessed/{}_0.csv'.format(class_name))
+    time_data, transposed_data = my_parse_csv('preprocessed/{}_2.csv'.format(class_name))
     readable_time = np.divide(time_data, MEAS_DATA_TIMESCALE)
     fig, (ax1, ax2, ax3) = plt.subplots(3)
     fig.suptitle('{}'.format(class_name))
@@ -14,4 +14,4 @@ for class_name in CLASSES:
     ax2.set_title('y acc')
     ax3.plot(readable_time, transposed_data[2])
     ax3.set_title('z acc')
-    plt.savefig('preprocessed_plotted/{}_0.png'.format(class_name))
+    plt.savefig('preprocessed_plotted/{}_2.png'.format(class_name))
