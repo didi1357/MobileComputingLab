@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ap="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:weightSum="6"
+    tools:context=".ui.home.HomeFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <com.androidplot.xy.XYPlot
+            android:id="@+id/plotDownstairs"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            ap:marginBottom="0dp"
+            ap:marginTop="0dp"
+            ap:marginLeft="0dp"
+            ap:marginRight="0dp"
+            ap:lineLabelRotationBottom="-45"
+            ap:lineLabels="left|bottom"
+            ap:rangeTitle="KNN-Percent"
+            ap:domainTitle="time"
+            ap:lineLabelTextSizeLeft="8dp"
+            ap:lineLabelInsetLeft="8dp"
+            ap:lineLabelTextSizeBottom="8dp"
+            ap:lineLabelInsetBottom="8dp"
+            ap:title="Downstairs" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <com.androidplot.xy.XYPlot
+            android:id="@+id/plotUpstairs"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            ap:marginBottom="0dp"
+            ap:marginTop="0dp"
+            ap:marginLeft="0dp"
+            ap:marginRight="0dp"
+            ap:lineLabelRotationBottom="-45"
+            ap:lineLabels="left|bottom"
+            ap:rangeTitle="KNN-Percent"
+            ap:domainTitle="time"
+            ap:lineLabelTextSizeLeft="8dp"
+            ap:lineLabelInsetLeft="8dp"
+            ap:lineLabelTextSizeBottom="8dp"
+            ap:lineLabelInsetBottom="8dp"
+            ap:title="Upstairs" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <com.androidplot.xy.XYPlot
+            android:id="@+id/plotSitting"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            ap:marginBottom="0dp"
+            ap:marginTop="0dp"
+            ap:marginLeft="0dp"
+            ap:marginRight="0dp"
+            ap:lineLabelRotationBottom="-45"
+            ap:lineLabels="left|bottom"
+            ap:rangeTitle="KNN-Percent"
+            ap:domainTitle="time"
+            ap:lineLabelTextSizeLeft="8dp"
+            ap:lineLabelInsetLeft="8dp"
+            ap:lineLabelTextSizeBottom="8dp"
+            ap:lineLabelInsetBottom="8dp"
+            ap:title="Sitting" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <com.androidplot.xy.XYPlot
+            android:id="@+id/plotStanding"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            ap:marginBottom="0dp"
+            ap:marginTop="0dp"
+            ap:marginLeft="0dp"
+            ap:marginRight="0dp"
+            ap:lineLabelRotationBottom="-45"
+            ap:lineLabels="left|bottom"
+            ap:rangeTitle="KNN-Percent"
+            ap:domainTitle="time"
+            ap:lineLabelTextSizeLeft="8dp"
+            ap:lineLabelInsetLeft="8dp"
+            ap:lineLabelTextSizeBottom="8dp"
+            ap:lineLabelInsetBottom="8dp"
+            ap:title="Standing" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <com.androidplot.xy.XYPlot
+            android:id="@+id/plotWalking"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            ap:marginBottom="0dp"
+            ap:marginTop="0dp"
+            ap:marginLeft="0dp"
+            ap:marginRight="0dp"
+            ap:lineLabelRotationBottom="-45"
+            ap:lineLabels="left|bottom"
+            ap:rangeTitle="KNN-Percent"
+            ap:domainTitle="time"
+            ap:lineLabelTextSizeLeft="8dp"
+            ap:lineLabelInsetLeft="8dp"
+            ap:lineLabelTextSizeBottom="8dp"
+            ap:lineLabelInsetBottom="8dp"
+            ap:title="Walking" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <com.androidplot.xy.XYPlot
+            android:id="@+id/plotJogging"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            ap:marginBottom="0dp"
+            ap:marginTop="0dp"
+            ap:marginLeft="0dp"
+            ap:marginRight="0dp"
+            ap:lineLabelRotationBottom="-45"
+            ap:lineLabels="left|bottom"
+            ap:rangeTitle="KNN-Percent"
+            ap:domainTitle="time"
+            ap:lineLabelTextSizeLeft="8dp"
+            ap:lineLabelInsetLeft="8dp"
+            ap:lineLabelTextSizeBottom="8dp"
+            ap:lineLabelInsetBottom="8dp"
+            ap:title="Jogging" />
+    </LinearLayout>
+</LinearLayout>
