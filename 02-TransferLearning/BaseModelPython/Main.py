@@ -41,7 +41,25 @@ le = preprocessing.LabelEncoder()
 df[LABEL] = le.fit_transform(df['activity'].values.ravel())
 num_classes = le.classes_.size
 
-# Do normalization by user:
+# Do normalization by user using (val-min)/max:
+# for current_user_id in df['user-id'].unique():
+#     # shift by min value to have only positives:
+#     x_min = df.loc[df['user-id'] == current_user_id]['x-axis'].values.min()
+#     y_min = df.loc[df['user-id'] == current_user_id]['y-axis'].values.min()
+#     z_min = df.loc[df['user-id'] == current_user_id]['z-axis'].values.min()
+#     df.loc[df['user-id'] == current_user_id, 'x-axis'] = df.loc[df['user-id'] == current_user_id]['x-axis'] - x_min
+#     df.loc[df['user-id'] == current_user_id, 'y-axis'] = df.loc[df['user-id'] == current_user_id]['y-axis'] - y_min
+#     df.loc[df['user-id'] == current_user_id, 'z-axis'] = df.loc[df['user-id'] == current_user_id]['z-axis'] - z_min
+#     # divide by max:
+#     x_max = df.loc[df['user-id'] == current_user_id]['x-axis'].values.max()
+#     y_max = df.loc[df['user-id'] == current_user_id]['y-axis'].values.max()
+#     z_max = df.loc[df['user-id'] == current_user_id]['z-axis'].values.max()
+#     df.loc[df['user-id'] == current_user_id, 'x-axis'] = df.loc[df['user-id'] == current_user_id]['x-axis'] / x_max
+#     df.loc[df['user-id'] == current_user_id, 'y-axis'] = df.loc[df['user-id'] == current_user_id]['y-axis'] / y_max
+#     df.loc[df['user-id'] == current_user_id, 'z-axis'] = df.loc[df['user-id'] == current_user_id]['z-axis'] / z_max
+# print('Finished normalizing!')
+
+# Do normalization by user using StandardScaler:
 # for current_user_id in df['user-id'].unique():
 #     scaler = StandardScaler()
 #     x_data = df.loc[df['user-id'] == current_user_id]['x-axis']
@@ -123,7 +141,7 @@ def do_reformatting_by_user_and_activity(data_frame):
     return reshaped_segments, y_data_hot
 
 
-x_train, y_train = do_reformatting_by_user_and_activity(df_train)
+x_train, y_train = do_reformatting_github(df_train)
 
 model_m = Sequential()
 model_m.add(Reshape((NUM_SAMPLES_PER_SEGMENT, 3), input_shape=(INPUT_SHAPE,)))
@@ -151,3 +169,9 @@ plt.xlabel('Training Epoch')
 plt.ylim([0, 1.5])
 plt.legend()
 plt.show()
+
+model_m.save('base_model.pbtxt')
+converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)
+tflite_model = converter.convert()
+with open("converted_base_model.tflite", "wb") as file_handle:
+    file_handle.write(tflite_model)
