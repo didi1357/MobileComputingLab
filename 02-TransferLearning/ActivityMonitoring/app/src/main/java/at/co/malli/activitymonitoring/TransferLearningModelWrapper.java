@@ -47,12 +47,16 @@ public class TransferLearningModelWrapper implements Closeable {
     private final ConditionVariable shouldTrain = new ConditionVariable();
     private volatile LossConsumer lossConsumer;
 
+    public static final String[] CLASSES = {"downstairs", "jogging", "sitting", "standing",
+            "upstairs", "walking"};
+
+    private int[] semgmentsPerClass = {0, 0, 0, 0, 0, 0};
+
     TransferLearningModelWrapper(Context context) {
         model =
                 new TransferLearningModel(
-                        new AssetModelLoader(context, "model"),
-                        Arrays.asList("Downstairs", "Jogging", "Sitting", "Standing", "Upstairs",
-                                      "Walking")
+                        new AssetModelLoader(context, "head_model_github"),
+                        Arrays.asList(CLASSES)
                 );
 
         new Thread(() -> {
@@ -62,7 +66,7 @@ public class TransferLearningModelWrapper implements Closeable {
                     model.train(1, lossConsumer).get();
                 } catch (ExecutionException e) {
                     throw new RuntimeException("Exception occurred during model training",
-                                               e.getCause());
+                            e.getCause());
                 } catch (InterruptedException e) {
                     // no-op
                 }
@@ -70,8 +74,21 @@ public class TransferLearningModelWrapper implements Closeable {
         }).start();
     }
 
+    public int getSegmentCount(int index) {
+        return semgmentsPerClass[index];
+    }
+
+    public boolean enoughSegmentsForTraining() {
+        for (int segmentCount : semgmentsPerClass) {
+            if (segmentCount < getTrainBatchSize())
+                return false;
+        }
+        return true;
+    }
+
     // This method is thread-safe.
-    public Future<Void> addSample(float[] input, String className) {
+    public Future<Void> addSample(float[] input, String className, int classIndex) {
+        semgmentsPerClass[classIndex]++;
         return model.addSample(input, className);
     }
 

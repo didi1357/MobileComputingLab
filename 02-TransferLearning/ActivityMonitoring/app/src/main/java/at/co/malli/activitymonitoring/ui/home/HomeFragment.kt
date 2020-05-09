@@ -21,7 +21,8 @@ class HomeFragment : Fragment() {
 
     companion object {
         private val TAG: String? = HomeFragment::class.simpleName
-        lateinit var graphSeriesFormat: LineAndPointFormatter
+        lateinit var graphSeriesFormatTF: LineAndPointFormatter
+        lateinit var graphSeriesFormatKNN: LineAndPointFormatter
 
         val PLOT_X_LIMIT = 25
 
@@ -33,22 +34,34 @@ class HomeFragment : Fragment() {
         lateinit var joggingPlot: XYPlot
         lateinit var plotArr: Array<XYPlot>
 
-        val downstairsValues = mutableListOf<Float>()
-        val upstairsValues = mutableListOf<Float>()
-        val sittingValues = mutableListOf<Float>()
-        val standingValues = mutableListOf<Float>()
-        val walkingValues = mutableListOf<Float>()
-        val joggingValues = mutableListOf<Float>()
-        val timeSeriesData = arrayOf(
-            downstairsValues, upstairsValues,
-            sittingValues, standingValues, walkingValues, joggingValues
+        val downstairsValuesKNN = mutableListOf<Float>()
+        val upstairsValuesKNN = mutableListOf<Float>()
+        val sittingValuesKNN = mutableListOf<Float>()
+        val standingValuesKNN = mutableListOf<Float>()
+        val walkingValuesKNN = mutableListOf<Float>()
+        val joggingValuesKNN = mutableListOf<Float>()
+        val downstairsValuesTF = mutableListOf<Float>()
+        val upstairsValuesTF = mutableListOf<Float>()
+        val sittingValuesTF = mutableListOf<Float>()
+        val standingValuesTF = mutableListOf<Float>()
+        val walkingValuesTF = mutableListOf<Float>()
+        val joggingValuesTF = mutableListOf<Float>()
+        val timeSeriesDataTF = arrayOf(
+            downstairsValuesTF, upstairsValuesTF,
+            sittingValuesTF, standingValuesTF, walkingValuesTF, joggingValuesTF
+        )
+        val timeSeriesDataKNN = arrayOf(
+            downstairsValuesKNN, upstairsValuesKNN,
+            sittingValuesKNN, standingValuesKNN, walkingValuesKNN, joggingValuesKNN
         )
 
         val timeAxis = ArrayList<Float>()
 
-        fun pushNewClassificationResult(results: ArrayList<Float>) {
-            for (i in results.indices)
-                timeSeriesData[i].add(results[i])
+        fun pushNewClassificationResult(resultsKNN: ArrayList<Float>, resultsTF: ArrayList<Float>) {
+            for (i in resultsKNN.indices) {
+                timeSeriesDataKNN[i].add(resultsKNN[i])
+                timeSeriesDataTF[i].add(resultsTF[i])
+            }
             if (timeAxis.isEmpty())
                 timeAxis.add(0.0f)
             else
@@ -58,20 +71,32 @@ class HomeFragment : Fragment() {
         }
 
         fun updatePlot() {
-            val downstairsSeries = SimpleXYSeries(timeAxis, downstairsValues, "downstairs")
-            val upstairsSeries = SimpleXYSeries(timeAxis, upstairsValues, "upstairs")
-            val sittingSeries = SimpleXYSeries(timeAxis, sittingValues, "sitting")
-            val standingSeries = SimpleXYSeries(timeAxis, standingValues, "standing")
-            val walkingSeries = SimpleXYSeries(timeAxis, walkingValues, "walking")
-            val joggingSeries = SimpleXYSeries(timeAxis, joggingValues, "jogging")
+            val downstairsSeriesKNN = SimpleXYSeries(timeAxis, downstairsValuesKNN, "downstairs")
+            val upstairsSeriesKNN = SimpleXYSeries(timeAxis, upstairsValuesKNN, "upstairs")
+            val sittingSeriesKNN = SimpleXYSeries(timeAxis, sittingValuesKNN, "sitting")
+            val standingSeriesKNN = SimpleXYSeries(timeAxis, standingValuesKNN, "standing")
+            val walkingSeriesKNN = SimpleXYSeries(timeAxis, walkingValuesKNN, "walking")
+            val joggingSeriesKNN = SimpleXYSeries(timeAxis, joggingValuesKNN, "jogging")
+            val downstairsSeriesTF = SimpleXYSeries(timeAxis, downstairsValuesKNN, "downstairs")
+            val upstairsSeriesTF = SimpleXYSeries(timeAxis, upstairsValuesKNN, "upstairs")
+            val sittingSeriesTF = SimpleXYSeries(timeAxis, sittingValuesKNN, "sitting")
+            val standingSeriesTF = SimpleXYSeries(timeAxis, standingValuesKNN, "standing")
+            val walkingSeriesTF = SimpleXYSeries(timeAxis, walkingValuesKNN, "walking")
+            val joggingSeriesTF = SimpleXYSeries(timeAxis, joggingValuesKNN, "jogging")
             for (plot in plotArr)
                 plot.clear()
-            downstairsPlot.addSeries(downstairsSeries, graphSeriesFormat)
-            upstairsPlot.addSeries(upstairsSeries, graphSeriesFormat)
-            sittingPlot.addSeries(sittingSeries, graphSeriesFormat)
-            standingPlot.addSeries(standingSeries, graphSeriesFormat)
-            walkingPlot.addSeries(walkingSeries, graphSeriesFormat)
-            joggingPlot.addSeries(joggingSeries, graphSeriesFormat)
+            downstairsPlot.addSeries(downstairsSeriesKNN, graphSeriesFormatKNN)
+            upstairsPlot.addSeries(upstairsSeriesKNN, graphSeriesFormatKNN)
+            sittingPlot.addSeries(sittingSeriesKNN, graphSeriesFormatKNN)
+            standingPlot.addSeries(standingSeriesKNN, graphSeriesFormatKNN)
+            walkingPlot.addSeries(walkingSeriesKNN, graphSeriesFormatKNN)
+            joggingPlot.addSeries(joggingSeriesKNN, graphSeriesFormatKNN)
+            downstairsPlot.addSeries(downstairsSeriesTF, graphSeriesFormatTF)
+            upstairsPlot.addSeries(upstairsSeriesTF, graphSeriesFormatTF)
+            sittingPlot.addSeries(sittingSeriesTF, graphSeriesFormatTF)
+            standingPlot.addSeries(standingSeriesTF, graphSeriesFormatTF)
+            walkingPlot.addSeries(walkingSeriesTF, graphSeriesFormatTF)
+            joggingPlot.addSeries(joggingSeriesTF, graphSeriesFormatTF)
             var lowerLimit = 0.0f
             if (timeAxis.size > PLOT_X_LIMIT)
                 lowerLimit = timeAxis[timeAxis.size - PLOT_X_LIMIT]
@@ -80,8 +105,10 @@ class HomeFragment : Fragment() {
                 plot.setRangeBoundaries(-0.01, 1.01, BoundaryMode.FIXED)
                 plot.setRangeStep(StepMode.SUBDIVIDE, 4.0)
                 plot.setDomainBoundaries(lowerLimit, timeAxis.last(), BoundaryMode.FIXED)
-                plot.graph.getLineLabelStyle(XYGraphWidget.Edge.LEFT).format = NumberFormat.getPercentInstance(
-                    Locale.GERMAN)
+                plot.graph.getLineLabelStyle(XYGraphWidget.Edge.LEFT).format =
+                    NumberFormat.getPercentInstance(
+                        Locale.GERMAN
+                    )
                 plot.redraw()
             }
         }
@@ -105,7 +132,8 @@ class HomeFragment : Fragment() {
             downstairsPlot, upstairsPlot, sittingPlot,
             standingPlot, walkingPlot, joggingPlot
         )
-        graphSeriesFormat = LineAndPointFormatter(Color.RED, Color.GREEN, Color.BLUE, null)
+        graphSeriesFormatKNN = LineAndPointFormatter(Color.RED, Color.RED, Color.TRANSPARENT, null)
+        graphSeriesFormatTF = LineAndPointFormatter(Color.BLUE, Color.BLUE, Color.TRANSPARENT, null)
 //        graphSeriesFormat.interpolationParams =
 //            CatmullRomInterpolator.Params(10, CatmullRomInterpolator.Type.Centripetal)
         return root

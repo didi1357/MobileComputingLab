@@ -7,30 +7,39 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.RadioGroup
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
+import at.co.malli.activitymonitoring.MainActivity
 import at.co.malli.activitymonitoring.MainActivity.Companion.externalFilesDir
 import at.co.malli.activitymonitoring.MainActivity.Companion.sensorDataList
 import at.co.malli.activitymonitoring.R
-import kotlinx.android.synthetic.main.fragment_recording.*
+import at.co.malli.activitymonitoring.TransferLearningModelWrapper
 import java.io.File
-import java.io.FileOutputStream
-import java.io.OutputStreamWriter
 
 
 class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedChangeListener {
 
-    private fun toFloatArray(list: List<Float>): FloatArray? {
-        var i = 0
-        val array = FloatArray(list.size)
-        for (f in list) {
-            array[i++] = f ?: Float.NaN
-        }
-        return array
-    }
-
     companion object {
+        fun updateSegmentCounts(currentModel: TransferLearningModelWrapper) {
+            downstairsTV.text = "${currentModel.getSegmentCount(ACTIVITY_DOWNSTAIRS)}"
+            joggingTV.text = "${currentModel.getSegmentCount(ACTIVITY_JOGGING)}"
+            sittingTV.text = "${currentModel.getSegmentCount(ACTIVITY_SITTING)}"
+            standingTV.text = "${currentModel.getSegmentCount(ACTIVITY_STANDING)}"
+            upstairsTV.text = "${currentModel.getSegmentCount(ACTIVITY_UPSTAIRS)}"
+            walkingTV.text = "${currentModel.getSegmentCount(ACTIVITY_WALKING)}"
+        }
+
         private val TAG: String? = RecordingFragment::class.simpleName
+
+        const val ACTIVITY_INVALID = -1
+        const val ACTIVITY_DOWNSTAIRS = 0
+        const val ACTIVITY_JOGGING = 1
+        const val ACTIVITY_SITTING = 2
+        const val ACTIVITY_STANDING = 3
+        const val ACTIVITY_UPSTAIRS = 4
+        const val ACTIVITY_WALKING = 5
+        var currentRecordingActivity = ACTIVITY_INVALID
 
         const val STATE_STOPPED = 0
         const val STATE_RECORDING = 1
@@ -40,17 +49,25 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
         const val POSITION_HAND = 0
         const val POSITION_POCKET = 1
         var currentPositionSelection: Int = POSITION_HAND
+        lateinit var downstairsBut: Button
+        lateinit var joggingBut: Button
+        lateinit var sittingBut: Button
+        lateinit var standingBut: Button
+        lateinit var upstairsBut: Button
+        lateinit var walkingBut: Button
+        lateinit var trainingBut: Button
+        lateinit var positionRG: RadioGroup
+        lateinit var stopBut: Button
+        lateinit var downstairsTV: TextView
+        lateinit var joggingTV: TextView
+        lateinit var sittingTV: TextView
+        lateinit var standingTV: TextView
+        lateinit var upstairsTV: TextView
+        lateinit var walkingTV: TextView
+        lateinit var lossTV: TextView
     }
 
     private lateinit var recordingViewModel: RecordingViewModel
-    private lateinit var recordDownstairsButton: Button
-    private lateinit var recordJoggingButton: Button
-    private lateinit var recordSittingButton: Button
-    private lateinit var recordStandingButton: Button
-    private lateinit var recordUpstairsButton: Button
-    private lateinit var recordWalkingButton: Button
-    private lateinit var doTrainingButton: Button
-    private lateinit var stopButton: Button
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -60,38 +77,46 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
         recordingViewModel =
             ViewModelProviders.of(this).get(RecordingViewModel::class.java)
         val rootView = inflater.inflate(R.layout.fragment_recording, container, false)
-        recordDownstairsButton = rootView.findViewById(R.id.recordDownstairsButton) as Button
-        recordJoggingButton = rootView.findViewById(R.id.recordJoggingButton) as Button
-        recordSittingButton = rootView.findViewById(R.id.recordSittingButton) as Button
-        recordStandingButton = rootView.findViewById(R.id.recordStandingButton) as Button
-        recordUpstairsButton = rootView.findViewById(R.id.recordUpstairsButton) as Button
-        recordWalkingButton = rootView.findViewById(R.id.recordWalkingButton) as Button
-        doTrainingButton = rootView.findViewById(R.id.doTrainingButton) as Button
-        stopButton = rootView.findViewById(R.id.stopButton) as Button
-        recordDownstairsButton.setOnClickListener(this)
-        recordJoggingButton.setOnClickListener(this)
-        recordSittingButton.setOnClickListener(this)
-        recordStandingButton.setOnClickListener(this)
-        recordUpstairsButton.setOnClickListener(this)
-        recordWalkingButton.setOnClickListener(this)
-        doTrainingButton.setOnClickListener(this)
-        stopButton.setOnClickListener(this)
+        downstairsBut = rootView.findViewById(R.id.recordDownstairsButton) as Button
+        joggingBut = rootView.findViewById(R.id.recordJoggingButton) as Button
+        sittingBut = rootView.findViewById(R.id.recordSittingButton) as Button
+        standingBut = rootView.findViewById(R.id.recordStandingButton) as Button
+        upstairsBut = rootView.findViewById(R.id.recordUpstairsButton) as Button
+        walkingBut = rootView.findViewById(R.id.recordWalkingButton) as Button
+        trainingBut = rootView.findViewById(R.id.doTrainingButton) as Button
+        positionRG = rootView.findViewById(R.id.positionRadioGroup) as RadioGroup
+        stopBut = rootView.findViewById(R.id.stopButton) as Button
+        downstairsTV = rootView.findViewById(R.id.downstairsTextView) as TextView
+        joggingTV = rootView.findViewById(R.id.joggingTextView) as TextView
+        sittingTV = rootView.findViewById(R.id.sittingTextView) as TextView
+        standingTV = rootView.findViewById(R.id.standingTextView) as TextView
+        upstairsTV = rootView.findViewById(R.id.upstairsTextView) as TextView
+        walkingTV = rootView.findViewById(R.id.walkingTextView) as TextView
+        lossTV = rootView.findViewById(R.id.lossTextView) as TextView
+        downstairsBut.setOnClickListener(this)
+        joggingBut.setOnClickListener(this)
+        sittingBut.setOnClickListener(this)
+        standingBut.setOnClickListener(this)
+        upstairsBut.setOnClickListener(this)
+        walkingBut.setOnClickListener(this)
+        trainingBut.setOnClickListener(this)
+        stopBut.setOnClickListener(this)
 
-        positionRadioGroup.setOnCheckedChangeListener(this)
+        positionRG.setOnCheckedChangeListener(this)
 
-        applyState(null)
+        applyStateUI(null)
 
         return rootView
     }
 
     override fun onClick(v: View?) {
         when (v?.id) {
-            R.id.recordDownstairsButton -> recordPressed(0)
-            R.id.recordJoggingButton -> recordPressed(1)
-            R.id.recordSittingButton -> recordPressed(2)
-            R.id.recordStandingButton -> recordPressed(3)
-            R.id.recordUpstairsButton -> recordPressed(4)
-            R.id.recordWalkingButton -> recordPressed(5)
+            R.id.recordDownstairsButton -> recordPressed(ACTIVITY_DOWNSTAIRS)
+            R.id.recordJoggingButton -> recordPressed(ACTIVITY_JOGGING)
+            R.id.recordSittingButton -> recordPressed(ACTIVITY_SITTING)
+            R.id.recordStandingButton -> recordPressed(ACTIVITY_STANDING)
+            R.id.recordUpstairsButton -> recordPressed(ACTIVITY_UPSTAIRS)
+            R.id.recordWalkingButton -> recordPressed(ACTIVITY_WALKING)
             R.id.doTrainingButton -> doTraining()
             R.id.loadButton -> loadPressed()
             R.id.saveButton -> savePressed()
@@ -101,62 +126,71 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
 
     private fun loadPressed() {
         Log.v(TAG, "loadPressed")
+        val learnedFilePath = File(externalFilesDir, "$currentPositionSelection.learned")
+        MainActivity.tlModels[currentPositionSelection].loadModel(learnedFilePath)
     }
 
     private fun savePressed() {
         Log.v(TAG, "savePressed")
+        val learnedFilePath = File(externalFilesDir, "$currentPositionSelection.learned")
+        MainActivity.tlModels[currentPositionSelection].saveModel(learnedFilePath)
     }
 
-    fun applyState(new_state: Int?) {
+    fun applyStateUI(new_state: Int?) {
         if (new_state != null)
             currentState = new_state
 
         when (currentState) {
             STATE_STOPPED -> {
-                recordDownstairsButton.isEnabled = true
-                stopButton.isEnabled = false
+                downstairsBut.isEnabled = true
+                joggingBut.isEnabled = true
+                sittingBut.isEnabled = true
+                standingBut.isEnabled = true
+                upstairsBut.isEnabled = true
+                walkingBut.isEnabled = true
+                trainingBut.isEnabled = true
+                positionRG.isEnabled = true
+                stopBut.isEnabled = false
             }
             STATE_RECORDING -> {
-                recordDownstairsButton.isEnabled = false
-                stopButton.isEnabled = true
+                downstairsBut.isEnabled = false
+                joggingBut.isEnabled = false
+                sittingBut.isEnabled = false
+                standingBut.isEnabled = false
+                upstairsBut.isEnabled = false
+                walkingBut.isEnabled = false
+                trainingBut.isEnabled = false
+                positionRG.isEnabled = false
+                stopBut.isEnabled = true
             }
             STATE_TRAINING -> {
-
+                downstairsBut.isEnabled = false
+                joggingBut.isEnabled = false
+                sittingBut.isEnabled = false
+                standingBut.isEnabled = false
+                upstairsBut.isEnabled = false
+                walkingBut.isEnabled = false
+                trainingBut.isEnabled = false
+                positionRG.isEnabled = false
+                stopBut.isEnabled = true
             }
         }
     }
 
     fun recordPressed(activity_id: Int) {
         Log.v(TAG, "recordPressed: $activity_id")
-        applyState(STATE_RECORDING)
+        applyStateUI(STATE_RECORDING)
         sensorDataList.clear() //TODO: locking on sensorDataList?
     }
 
     fun doTraining() {
         Log.v(TAG, "doTrainingPressed")
-        applyState(STATE_TRAINING)
+        applyStateUI(STATE_TRAINING)
     }
 
     fun stopPressed() {
-        applyState(STATE_STOPPED)
         Log.v(TAG, "stopPressed")
-
-        if (sensorDataList.isEmpty()) {
-            Log.v(TAG, "List empty! Will not write anything!")
-            return
-        }
-
-        val lastTimestamp = sensorDataList[sensorDataList.lastIndex].timestamp
-        val path = File(externalFilesDir, "$lastTimestamp.csv")
-        val fOutStream = OutputStreamWriter(FileOutputStream(path))
-        Log.v(TAG, "Opened file for writing: $path")
-        for (data in sensorDataList) {
-            val str = "${data.timestamp}, ${data.x}, ${data.y}, ${data.z}\n"
-            fOutStream.write(str)
-        }
-        fOutStream.flush()
-        fOutStream.close()
-        Log.v(TAG, "sensorDataList had ${sensorDataList.size} entries.")
+        applyStateUI(STATE_STOPPED)
     }
 
     override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {

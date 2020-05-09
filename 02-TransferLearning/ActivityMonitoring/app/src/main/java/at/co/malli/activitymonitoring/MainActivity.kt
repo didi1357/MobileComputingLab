@@ -10,6 +10,7 @@ import android.hardware.SensorManager
 import android.os.Bundle
 import android.os.PowerManager
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
@@ -38,6 +39,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         const val APPROX_SENS_VAL_DELAY_MS = 5.0
         const val DESIRED_WINDOW_MS = 1200.0f
         const val WINDOW_N: Int = (DESIRED_WINDOW_MS / APPROX_SENS_VAL_DELAY_MS).toInt()
+
+        lateinit var tlHandModel: TransferLearningModelWrapper
+        lateinit var tlPocketModel: TransferLearningModelWrapper
+        var tlModels = arrayOf(tlHandModel, tlPocketModel)
     }
 
     private lateinit var sm: SensorManager
@@ -45,9 +50,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
 
-    private lateinit var tlHandModel: TransferLearningModelWrapper
-    private lateinit var tlPocketModel: TransferLearningModelWrapper
-    private var tlModels = arrayOf(tlHandModel, tlPocketModel)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -133,6 +135,16 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             Log.d(TAG, "Accuracy of sensor " + sensor.name + " changed to $accuracy")
     }
 
+    fun toTfFormattedArray(inputList: ArrayList<SensorValue>): FloatArray {
+        var outputArray = FloatArray(inputList.size * 3)
+        for (i in 0..WINDOW_N * 3) {
+            outputArray[i] = inputList[i % 3].x
+            outputArray[i] = inputList[i % 3].y
+            outputArray[i] = inputList[i % 3].z
+        }
+        return outputArray
+    }
+
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
             sensorDataList.add(
@@ -141,19 +153,46 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                 )
             )
             if (sensorDataList.size > WINDOW_N) {
+                val currentModel = tlModels[RecordingFragment.currentPositionSelection]
                 when (RecordingFragment.currentState) {
                     RecordingFragment.STATE_STOPPED -> {
                         //run calculations to update plots only if not recording :)
+                        //for KNN:
                         val vector = classifier!!.calculateFeatureVector(sensorDataList)
-                        val probabilities = classifier!!.classify(vector)
-                        HomeFragment.pushNewClassificationResult(probabilities)
+                        val probabilitiesKNN = classifier!!.classify(vector)
+                        //for TF:
+                        var tfFormattedArray = toTfFormattedArray(sensorDataList)
+                        val predictions = currentModel.predict(tfFormattedArray)
+                        var probabilitiesTF = ArrayList<Float>(KNNClassifier.CLASSES.size)
+                        for (prediction in predictions) {
+                            var knnCompatIndex = KNNClassifier.CLASSES.indexOf(prediction.className)
+                            probabilitiesTF[knnCompatIndex] = prediction.confidence
+                        }
+                        HomeFragment.pushNewClassificationResult(probabilitiesKNN, probabilitiesTF)
                         sensorDataList.clear()
                     }
                     RecordingFragment.STATE_TRAINING -> {
                         sensorDataList.clear() // just make sure it doesn't grow too much :)
+                        if (currentModel.enoughSegmentsForTraining()) {
+                            currentModel.enableTraining { epoch, loss ->
+                                runOnUiThread {
+                                    RecordingFragment.lossTV.setText("$loss")
+                                }
+                            }
+                        } else {
+                            val nr = currentModel.trainBatchSize
+                            val text = "$nr segments per class are required for training."
+                            Toast.makeText(applicationContext, text, Toast.LENGTH_LONG).show()
+                            RecordingFragment.stopBut.callOnClick()
+                        }
                     }
                     RecordingFragment.STATE_RECORDING -> {
-                        RecordingFragment.pushRecordingToModel()
+                        val tfFormattedArray = toTfFormattedArray(sensorDataList)
+                        val curActivity = RecordingFragment.currentRecordingActivity
+                        val curActivityString = TransferLearningModelWrapper.CLASSES[curActivity]
+                        currentModel.addSample(tfFormattedArray, curActivityString, curActivity)
+                        RecordingFragment.updateSegmentCounts(currentModel)
+                        sensorDataList.clear()
                     }
                 }
             }
@@ -164,5 +203,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         super.onDestroy()
         sm.unregisterListener(this)
         wakeLock.release()
+        for (model in tlModels) {
+            model.close()
+        }
     }
 }
