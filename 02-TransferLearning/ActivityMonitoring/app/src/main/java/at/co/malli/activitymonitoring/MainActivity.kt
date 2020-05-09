@@ -38,11 +38,12 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
         const val APPROX_SENS_VAL_DELAY_MS = 5.0
         const val DESIRED_WINDOW_MS = 1200.0f
-        const val WINDOW_N: Int = (DESIRED_WINDOW_MS / APPROX_SENS_VAL_DELAY_MS).toInt()
+//        const val WINDOW_N: Int = (DESIRED_WINDOW_MS / APPROX_SENS_VAL_DELAY_MS).toInt()
+        const val WINDOW_N: Int = 80
 
         lateinit var tlHandModel: TransferLearningModelWrapper
         lateinit var tlPocketModel: TransferLearningModelWrapper
-        var tlModels = arrayOf(tlHandModel, tlPocketModel)
+        lateinit var tlModels: Array<TransferLearningModelWrapper>
     }
 
     private lateinit var sm: SensorManager
@@ -90,6 +91,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
         tlHandModel = TransferLearningModelWrapper(applicationContext)
         tlPocketModel = TransferLearningModelWrapper(applicationContext)
+        tlModels = arrayOf(tlHandModel, tlPocketModel)
 
         sm = getSystemService(SENSOR_SERVICE) as SensorManager
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -137,10 +139,14 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     fun toTfFormattedArray(inputList: ArrayList<SensorValue>): FloatArray {
         var outputArray = FloatArray(inputList.size * 3)
-        for (i in 0..WINDOW_N * 3) {
+        var i = 0
+        while (i < WINDOW_N) {
             outputArray[i] = inputList[i % 3].x
+            i+=1
             outputArray[i] = inputList[i % 3].y
+            i+=1
             outputArray[i] = inputList[i % 3].z
+            i+=1
         }
         return outputArray
     }
@@ -152,7 +158,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                     event.values[0], event.values[1], event.values[2], event.timestamp
                 )
             )
-            if (sensorDataList.size > WINDOW_N) {
+            if (sensorDataList.size >= WINDOW_N) {
                 val currentModel = tlModels[RecordingFragment.currentPositionSelection]
                 when (RecordingFragment.currentState) {
                     RecordingFragment.STATE_STOPPED -> {
@@ -163,7 +169,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                         //for TF:
                         var tfFormattedArray = toTfFormattedArray(sensorDataList)
                         val predictions = currentModel.predict(tfFormattedArray)
-                        var probabilitiesTF = ArrayList<Float>(KNNClassifier.CLASSES.size)
+                        var probabilitiesTF = FloatArray(KNNClassifier.CLASSES.size)
                         for (prediction in predictions) {
                             var knnCompatIndex = KNNClassifier.CLASSES.indexOf(prediction.className)
                             probabilitiesTF[knnCompatIndex] = prediction.confidence

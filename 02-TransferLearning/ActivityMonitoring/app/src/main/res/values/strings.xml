@@ -6,6 +6,6 @@
     <string name="nav_header_subtitle">dietmar.malli@student.tugraz.at</string>
     <string name="nav_header_desc">Navigation header</string>
 
-    <string name="menu_home">Home</string>
+    <string name="menu_home">Home (R=KNN, B=TL)</string>
     <string name="menu_recording">Recording</string>
 </resources>

@@ -34,7 +34,9 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-
+    aaptOptions {
+        noCompress "tflite"
+    }
 }
 
 dependencies {
@@ -54,5 +56,7 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation "com.androidplot:androidplot-core:1.5.7"
+    implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
+    implementation 'org.tensorflow:tensorflow-lite-select-tf-ops:0.0.0-nightly'
     implementation project(path: ':transfer_api')
 }

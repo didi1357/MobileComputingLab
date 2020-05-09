@@ -6,8 +6,8 @@
 6
 7    <uses-sdk
 8        android:minSdkVersion="21"
-8-->/home/didi1357/git/mobile_computing_lab/code/OnDeviceActivityRecognition/android/transfer_api/src/main/AndroidManifest.xml
+8-->/home/didi1357/git/MobileComputingLab/02-TransferLearning/ActivityMonitoring/transfer_api/src/main/AndroidManifest.xml
 9        android:targetSdkVersion="29" />
-9-->/home/didi1357/git/mobile_computing_lab/code/OnDeviceActivityRecognition/android/transfer_api/src/main/AndroidManifest.xml
+9-->/home/didi1357/git/MobileComputingLab/02-TransferLearning/ActivityMonitoring/transfer_api/src/main/AndroidManifest.xml
 10
 11</manifest>

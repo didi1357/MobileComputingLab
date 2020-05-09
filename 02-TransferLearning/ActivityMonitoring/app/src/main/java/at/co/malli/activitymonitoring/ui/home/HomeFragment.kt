@@ -57,7 +57,7 @@ class HomeFragment : Fragment() {
 
         val timeAxis = ArrayList<Float>()
 
-        fun pushNewClassificationResult(resultsKNN: ArrayList<Float>, resultsTF: ArrayList<Float>) {
+        fun pushNewClassificationResult(resultsKNN: ArrayList<Float>, resultsTF: FloatArray) {
             for (i in resultsKNN.indices) {
                 timeSeriesDataKNN[i].add(resultsKNN[i])
                 timeSeriesDataTF[i].add(resultsTF[i])
@@ -77,12 +77,12 @@ class HomeFragment : Fragment() {
             val standingSeriesKNN = SimpleXYSeries(timeAxis, standingValuesKNN, "standing")
             val walkingSeriesKNN = SimpleXYSeries(timeAxis, walkingValuesKNN, "walking")
             val joggingSeriesKNN = SimpleXYSeries(timeAxis, joggingValuesKNN, "jogging")
-            val downstairsSeriesTF = SimpleXYSeries(timeAxis, downstairsValuesKNN, "downstairs")
-            val upstairsSeriesTF = SimpleXYSeries(timeAxis, upstairsValuesKNN, "upstairs")
-            val sittingSeriesTF = SimpleXYSeries(timeAxis, sittingValuesKNN, "sitting")
-            val standingSeriesTF = SimpleXYSeries(timeAxis, standingValuesKNN, "standing")
-            val walkingSeriesTF = SimpleXYSeries(timeAxis, walkingValuesKNN, "walking")
-            val joggingSeriesTF = SimpleXYSeries(timeAxis, joggingValuesKNN, "jogging")
+            val downstairsSeriesTF = SimpleXYSeries(timeAxis, downstairsValuesTF, "downstairs")
+            val upstairsSeriesTF = SimpleXYSeries(timeAxis, upstairsValuesTF, "upstairs")
+            val sittingSeriesTF = SimpleXYSeries(timeAxis, sittingValuesTF, "sitting")
+            val standingSeriesTF = SimpleXYSeries(timeAxis, standingValuesTF, "standing")
+            val walkingSeriesTF = SimpleXYSeries(timeAxis, walkingValuesTF, "walking")
+            val joggingSeriesTF = SimpleXYSeries(timeAxis, joggingValuesTF, "jogging")
             for (plot in plotArr)
                 plot.clear()
             downstairsPlot.addSeries(downstairsSeriesKNN, graphSeriesFormatKNN)
@@ -134,8 +134,6 @@ class HomeFragment : Fragment() {
         )
         graphSeriesFormatKNN = LineAndPointFormatter(Color.RED, Color.RED, Color.TRANSPARENT, null)
         graphSeriesFormatTF = LineAndPointFormatter(Color.BLUE, Color.BLUE, Color.TRANSPARENT, null)
-//        graphSeriesFormat.interpolationParams =
-//            CatmullRomInterpolator.Params(10, CatmullRomInterpolator.Type.Centripetal)
         return root
     }
 }

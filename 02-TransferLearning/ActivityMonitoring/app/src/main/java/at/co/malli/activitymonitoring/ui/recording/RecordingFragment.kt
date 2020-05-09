@@ -43,7 +43,7 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
 
         const val STATE_STOPPED = 0
         const val STATE_RECORDING = 1
-        const val STATE_TRAINING = 1
+        const val STATE_TRAINING = 2
         var currentState: Int = STATE_STOPPED
 
         const val POSITION_HAND = 0
@@ -58,6 +58,8 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
         lateinit var trainingBut: Button
         lateinit var positionRG: RadioGroup
         lateinit var stopBut: Button
+        lateinit var loadBut: Button
+        lateinit var saveBut: Button
         lateinit var downstairsTV: TextView
         lateinit var joggingTV: TextView
         lateinit var sittingTV: TextView
@@ -86,6 +88,8 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
         trainingBut = rootView.findViewById(R.id.doTrainingButton) as Button
         positionRG = rootView.findViewById(R.id.positionRadioGroup) as RadioGroup
         stopBut = rootView.findViewById(R.id.stopButton) as Button
+        loadBut = rootView.findViewById(R.id.loadButton) as Button
+        saveBut = rootView.findViewById(R.id.saveButton) as Button
         downstairsTV = rootView.findViewById(R.id.downstairsTextView) as TextView
         joggingTV = rootView.findViewById(R.id.joggingTextView) as TextView
         sittingTV = rootView.findViewById(R.id.sittingTextView) as TextView
@@ -101,6 +105,8 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
         walkingBut.setOnClickListener(this)
         trainingBut.setOnClickListener(this)
         stopBut.setOnClickListener(this)
+        loadBut.setOnClickListener(this)
+        saveBut.setOnClickListener(this)
 
         positionRG.setOnCheckedChangeListener(this)
 
@@ -179,6 +185,7 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
 
     fun recordPressed(activity_id: Int) {
         Log.v(TAG, "recordPressed: $activity_id")
+        currentRecordingActivity = activity_id
         applyStateUI(STATE_RECORDING)
         sensorDataList.clear() //TODO: locking on sensorDataList?
     }
@@ -190,6 +197,8 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
 
     fun stopPressed() {
         Log.v(TAG, "stopPressed")
+        if(currentState == STATE_TRAINING)
+            MainActivity.tlModels[currentPositionSelection].disableTraining()
         applyStateUI(STATE_STOPPED)
     }
 

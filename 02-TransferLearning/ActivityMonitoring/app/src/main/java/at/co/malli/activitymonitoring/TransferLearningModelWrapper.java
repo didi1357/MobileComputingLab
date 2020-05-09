@@ -55,6 +55,8 @@ public class TransferLearningModelWrapper implements Closeable {
     TransferLearningModelWrapper(Context context) {
         model =
                 new TransferLearningModel(
+//                        new AssetModelLoader(context, "head_model_aaqib"),
+//                        Arrays.asList("class1", "class2")
                         new AssetModelLoader(context, "head_model_github"),
                         Arrays.asList(CLASSES)
                 );

@@ -10,10 +10,10 @@
         android:id="@+id/recordDownstairsButton"
         android:layout_width="180dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
         android:text="Record Downstairs"
+        app:layout_constraintBottom_toTopOf="@+id/recordJoggingButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintHorizontal_bias="0.15"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -21,10 +21,10 @@
         android:id="@+id/recordJoggingButton"
         android:layout_width="180dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
         android:text="Record Jogging"
+        app:layout_constraintBottom_toTopOf="@+id/recordSittingButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintHorizontal_bias="0.15"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/recordDownstairsButton" />
 
@@ -32,10 +32,10 @@
         android:id="@+id/recordSittingButton"
         android:layout_width="180dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
         android:text="Record Sitting"
+        app:layout_constraintBottom_toTopOf="@+id/recordStandingButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintHorizontal_bias="0.15"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/recordJoggingButton" />
 
@@ -43,10 +43,10 @@
         android:id="@+id/recordStandingButton"
         android:layout_width="180dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
         android:text="Record Standing"
+        app:layout_constraintBottom_toTopOf="@+id/recordUpstairsButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintHorizontal_bias="0.15"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/recordSittingButton" />
 
@@ -54,10 +54,10 @@
         android:id="@+id/recordUpstairsButton"
         android:layout_width="180dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
         android:text="Record Upstairs"
+        app:layout_constraintBottom_toTopOf="@+id/recordWalkingButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintHorizontal_bias="0.15"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/recordStandingButton" />
 
@@ -65,10 +65,10 @@
         android:id="@+id/recordWalkingButton"
         android:layout_width="180dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
         android:text="Record Walking"
+        app:layout_constraintBottom_toTopOf="@+id/doTrainingButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintHorizontal_bias="0.15"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/recordUpstairsButton" />
 
@@ -76,8 +76,8 @@
         android:id="@+id/doTrainingButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
         android:text="Do Training"
+        app:layout_constraintBottom_toTopOf="@+id/positionRadioGroup"
         app:layout_constraintEnd_toEndOf="@+id/recordWalkingButton"
         app:layout_constraintTop_toBottomOf="@+id/recordWalkingButton" />
 
@@ -85,8 +85,8 @@
         android:id="@+id/positionRadioGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
         android:checkedButton="@id/handRadioButton"
+        app:layout_constraintBottom_toTopOf="@+id/stopButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
@@ -109,8 +109,8 @@
         android:id="@+id/stopButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
         android:text="Stop"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/saveButton"
@@ -132,8 +132,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="Segment Counts"
+        app:layout_constraintBottom_toTopOf="@+id/recordDownstairsButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.8"
+        app:layout_constraintHorizontal_bias="0.85"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -201,7 +202,7 @@
         android:id="@+id/lossTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="???"
+        android:text="unknown"
         app:layout_constraintBottom_toBottomOf="@+id/doTrainingButton"
         app:layout_constraintEnd_toEndOf="@+id/walkingTextView"
         app:layout_constraintStart_toStartOf="@+id/walkingTextView"
@@ -211,9 +212,11 @@
         android:id="@+id/lossHeadingTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
         android:text="Loss Value"
-        app:layout_constraintBottom_toTopOf="@+id/doTrainingButton"
+        app:layout_constraintBottom_toTopOf="@+id/lossTextView"
         app:layout_constraintEnd_toEndOf="@+id/walkingTextView"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="@+id/walkingTextView" />
 
     <Button
