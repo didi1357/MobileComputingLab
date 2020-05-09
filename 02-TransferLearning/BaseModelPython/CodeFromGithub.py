@@ -121,3 +121,9 @@ plt.xlabel('Training Epoch')
 plt.ylim(0)
 plt.legend()
 plt.show()
+
+model_m.save('base_model_github.pbtxt')
+converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)
+tflite_model = converter.convert()
+with open("converted_base_model_github.tflite", "wb") as file_handle:
+    file_handle.write(tflite_model)

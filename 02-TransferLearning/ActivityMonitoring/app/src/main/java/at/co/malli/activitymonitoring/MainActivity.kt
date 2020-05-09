@@ -45,6 +45,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
 
+    private lateinit var tlHandModel: TransferLearningModelWrapper
+    private lateinit var tlPocketModel: TransferLearningModelWrapper
+    private var tlModels = arrayOf(tlHandModel, tlPocketModel)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -81,6 +85,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         externalFilesDir = getExternalFilesDir(null)
 
         classifier = KNNClassifier(applicationContext.assets.open("windowed.json"))
+
+        tlHandModel = TransferLearningModelWrapper(applicationContext)
+        tlPocketModel = TransferLearningModelWrapper(applicationContext)
 
         sm = getSystemService(SENSOR_SERVICE) as SensorManager
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -133,13 +140,21 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                     event.values[0], event.values[1], event.values[2], event.timestamp
                 )
             )
-            if (RecordingFragment.currentState == RecordingFragment.STATE_NOT_RECORDING) {
-                //run calculations only if not recording :)
-                if (sensorDataList.size > WINDOW_N) {
-                    val vector = classifier!!.calculateFeatureVector(sensorDataList)
-                    val probabilities = classifier!!.classify(vector)
-                    HomeFragment.pushNewClassificationResult(probabilities)
-                    sensorDataList.clear()
+            if (sensorDataList.size > WINDOW_N) {
+                when (RecordingFragment.currentState) {
+                    RecordingFragment.STATE_STOPPED -> {
+                        //run calculations to update plots only if not recording :)
+                        val vector = classifier!!.calculateFeatureVector(sensorDataList)
+                        val probabilities = classifier!!.classify(vector)
+                        HomeFragment.pushNewClassificationResult(probabilities)
+                        sensorDataList.clear()
+                    }
+                    RecordingFragment.STATE_TRAINING -> {
+                        sensorDataList.clear() // just make sure it doesn't grow too much :)
+                    }
+                    RecordingFragment.STATE_RECORDING -> {
+                        RecordingFragment.pushRecordingToModel()
+                    }
                 }
             }
         }

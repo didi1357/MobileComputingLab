@@ -11,17 +11,17 @@ from sklearn import preprocessing
 
 import tensorflow
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Flatten, Reshape
-from tensorflow.keras.layers import Conv2D, MaxPooling2D
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Reshape, InputLayer
+from tensorflow.keras.layers import Conv1D, MaxPooling1D, GlobalAveragePooling1D
 from keras.utils import np_utils
 
 from sklearn.preprocessing import StandardScaler
 
 # Preprocessing parameters
-SEGMENT_DURATION_S = 4
+SEGMENT_DURATION_S = 1.2
 FREQUENCY_HZ = 20
 NUM_SAMPLES_PER_SEGMENT = int(np.floor(SEGMENT_DURATION_S / (1 / FREQUENCY_HZ)))
-STEP_INCREASE_S = 2  # this controls the overlap => e.g. window is always shifted by 2s
+STEP_INCREASE_S = SEGMENT_DURATION_S / 2  # this controls the overlap => e.g. window is always shifted by 2s
 NUM_SAMPLES_PER_STEP_INCREASE = int(np.floor(STEP_INCREASE_S / (1 / FREQUENCY_HZ)))
 NUM_SENSORS = 3
 INPUT_SHAPE = NUM_SAMPLES_PER_SEGMENT * NUM_SENSORS
@@ -40,6 +40,8 @@ le = preprocessing.LabelEncoder()
 # Add a new column to the existing DataFrame with the encoded values
 df[LABEL] = le.fit_transform(df['activity'].values.ravel())
 num_classes = le.classes_.size
+# Print all labels ascending:
+print(list(le.inverse_transform(range(0, num_classes))))
 
 # Do normalization by user using (val-min)/max:
 # for current_user_id in df['user-id'].unique():
@@ -82,7 +84,7 @@ num_classes = le.classes_.size
 df_test = df[df['user-id'] > 28]
 df_train = df[df['user-id'] <= 28]
 
-# Normalize features for training data set
+# # Normalize features for training data set
 pd.options.mode.chained_assignment = None  # default='warn'
 df_train['x-axis'] = df_train['x-axis'] / df_train['x-axis'].max()
 df_train['y-axis'] = df_train['y-axis'] / df_train['y-axis'].max()
@@ -106,7 +108,8 @@ def do_reformatting_github(data_frame):
 
     # Bring the segments into a better shape
     reshaped_segments_temp = np.asarray(segments, dtype=np.float32).reshape(-1, NUM_SAMPLES_PER_SEGMENT, NUM_SENSORS)
-    reshaped_segments = reshaped_segments_temp.reshape(reshaped_segments_temp.shape[0], INPUT_SHAPE).astype('float32')
+    # reshaped_segments = reshaped_segments_temp.reshape(reshaped_segments_temp.shape[0], INPUT_SHAPE).astype('float32')
+    reshaped_segments = reshaped_segments_temp.astype('float32')
     y_data_hot = np_utils.to_categorical(np.asarray(labels).astype('float32'), num_classes)
     return reshaped_segments, y_data_hot
 
@@ -117,10 +120,10 @@ def do_reformatting_by_user_and_activity(data_frame):
     labels = []
     for current_activity in data_frame['ActivityEncoded'].unique():
         current_activity_subset = data_frame.loc[data_frame['ActivityEncoded'] == current_activity]
-        # print('current_activity {} has {} entries'.format(current_activity, len(current_activity_subset)))
+        print('current_activity {} has {} entries'.format(current_activity, len(current_activity_subset)))
         # for cur_user_id in data_frame['user-id'].unique():
         #     current_subset = current_activity_subset.loc[current_activity_subset['user-id'] == cur_user_id]
-        #     # print('with user {} having {} entries'.format(cur_user_id, len(current_subset)))
+        #     print('with user {} having {} entries'.format(cur_user_id, len(current_subset)))
         #     for i in range(0, len(current_subset) - NUM_SAMPLES_PER_SEGMENT, NUM_SAMPLES_PER_STEP_INCREASE):
         #         x_series = current_subset['x-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
         #         y_series = current_subset['y-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
@@ -136,7 +139,8 @@ def do_reformatting_by_user_and_activity(data_frame):
 
     # Transfer data to numpy format for keras:
     reshaped_segments_temp = np.asarray(segments, dtype=np.float32).reshape(-1, NUM_SAMPLES_PER_SEGMENT, NUM_SENSORS)
-    reshaped_segments = reshaped_segments_temp.reshape(reshaped_segments_temp.shape[0], INPUT_SHAPE).astype('float32')
+    # reshaped_segments = reshaped_segments_temp.reshape(reshaped_segments_temp.shape[0], INPUT_SHAPE).astype('float32')
+    reshaped_segments = reshaped_segments_temp.astype('float32')
     y_data_hot = np_utils.to_categorical(np.asarray(labels).astype('float32'), num_classes)
     return reshaped_segments, y_data_hot
 
@@ -144,11 +148,21 @@ def do_reformatting_by_user_and_activity(data_frame):
 x_train, y_train = do_reformatting_github(df_train)
 
 model_m = Sequential()
-model_m.add(Reshape((NUM_SAMPLES_PER_SEGMENT, 3), input_shape=(INPUT_SHAPE,)))
-model_m.add(Dense(32, activation='relu'))
-model_m.add(Dense(16, activation='relu'))
-model_m.add(Dense(8, activation='relu', name="headlayer"))
-model_m.add(Flatten())
+model_m.add(InputLayer(input_shape=(NUM_SAMPLES_PER_SEGMENT, NUM_SENSORS)))
+model_m.add(Conv1D(filters=64, kernel_size=3, activation='relu'))
+model_m.add(Dropout(0.2))
+model_m.add(Conv1D(filters=32, kernel_size=3, activation='relu', name='headlayer'))
+model_m.add(Dropout(0.2))
+model_m.add(Conv1D(filters=num_classes, kernel_size=3, activation='relu'))
+model_m.add(GlobalAveragePooling1D())
+
+# model_m.add(Reshape((NUM_SENSORS, NUM_SAMPLES_PER_SEGMENT), input_shape=(INPUT_SHAPE,)))
+# model_m.add(Dense(32, activation='relu'))
+# model_m.add(Dropout(0.10))
+# model_m.add(Dense(16, activation='relu'))
+# model_m.add(Dense(8, activation='relu', name="headlayer"))
+# model_m.add(Flatten())
+
 model_m.add(Dense(num_classes, activation='softmax'))
 print(model_m.summary())
 
@@ -170,8 +184,8 @@ plt.ylim([0, 1.5])
 plt.legend()
 plt.show()
 
-model_m.save('base_model.pbtxt')
-converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)
-tflite_model = converter.convert()
-with open("converted_base_model.tflite", "wb") as file_handle:
-    file_handle.write(tflite_model)
+# model_m.save('base_model.pbtxt')
+# converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)
+# tflite_model = converter.convert()
+# with open("converted_base_model.tflite", "wb") as file_handle:
+#     file_handle.write(tflite_model)

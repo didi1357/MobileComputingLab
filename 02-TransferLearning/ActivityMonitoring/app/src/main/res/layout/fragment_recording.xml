@@ -7,23 +7,235 @@
     tools:context=".ui.recording.RecordingFragment">
 
     <Button
-        android:id="@+id/recordButton"
-        android:layout_width="wrap_content"
+        android:id="@+id/recordDownstairsButton"
+        android:layout_width="180dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="164dp"
-        android:text="Record"
+        android:layout_marginTop="40dp"
+        android:text="Record Downstairs"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintHorizontal_bias="0.2"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/recordJoggingButton"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Record Jogging"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/recordDownstairsButton" />
+
+    <Button
+        android:id="@+id/recordSittingButton"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Record Sitting"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/recordJoggingButton" />
+
+    <Button
+        android:id="@+id/recordStandingButton"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Record Standing"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/recordSittingButton" />
+
+    <Button
+        android:id="@+id/recordUpstairsButton"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Record Upstairs"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/recordStandingButton" />
+
+    <Button
+        android:id="@+id/recordWalkingButton"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Record Walking"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/recordUpstairsButton" />
+
+    <Button
+        android:id="@+id/doTrainingButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:text="Do Training"
+        app:layout_constraintEnd_toEndOf="@+id/recordWalkingButton"
+        app:layout_constraintTop_toBottomOf="@+id/recordWalkingButton" />
+
+    <RadioGroup
+        android:id="@+id/positionRadioGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:checkedButton="@id/handRadioButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/doTrainingButton">
+
+        <RadioButton
+            android:id="@+id/handRadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Hand" />
+
+        <RadioButton
+            android:id="@+id/pocketRadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pocket" />
+    </RadioGroup>
 
     <Button
         android:id="@+id/stopButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="32dp"
         android:text="Stop"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/saveButton"
+        app:layout_constraintTop_toBottomOf="@+id/positionRadioGroup" />
+
+    <TextView
+        android:id="@+id/phoneLocationTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:text="Phone Location:"
+        app:layout_constraintBottom_toBottomOf="@+id/positionRadioGroup"
+        app:layout_constraintEnd_toStartOf="@+id/positionRadioGroup"
+        app:layout_constraintTop_toTopOf="@+id/positionRadioGroup" />
+
+    <TextView
+        android:id="@+id/segmentsTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Segment Counts"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.8"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/recordButton" />
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/downstairsTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        app:layout_constraintBottom_toBottomOf="@+id/recordDownstairsButton"
+        app:layout_constraintEnd_toEndOf="@+id/segmentsTextView"
+        app:layout_constraintStart_toStartOf="@+id/segmentsTextView"
+        app:layout_constraintTop_toTopOf="@+id/recordDownstairsButton" />
+
+    <TextView
+        android:id="@+id/joggingTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        app:layout_constraintBottom_toBottomOf="@+id/recordJoggingButton"
+        app:layout_constraintEnd_toEndOf="@+id/segmentsTextView"
+        app:layout_constraintStart_toStartOf="@+id/segmentsTextView"
+        app:layout_constraintTop_toBottomOf="@+id/recordDownstairsButton" />
+
+    <TextView
+        android:id="@+id/sittingTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        app:layout_constraintBottom_toBottomOf="@+id/recordSittingButton"
+        app:layout_constraintEnd_toEndOf="@+id/segmentsTextView"
+        app:layout_constraintStart_toStartOf="@+id/segmentsTextView"
+        app:layout_constraintTop_toTopOf="@+id/recordSittingButton" />
+
+    <TextView
+        android:id="@+id/standingTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        app:layout_constraintBottom_toBottomOf="@+id/recordStandingButton"
+        app:layout_constraintEnd_toEndOf="@+id/segmentsTextView"
+        app:layout_constraintStart_toStartOf="@+id/segmentsTextView"
+        app:layout_constraintTop_toTopOf="@+id/recordStandingButton" />
+
+    <TextView
+        android:id="@+id/upstairsTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        app:layout_constraintBottom_toBottomOf="@+id/recordUpstairsButton"
+        app:layout_constraintEnd_toEndOf="@+id/segmentsTextView"
+        app:layout_constraintStart_toStartOf="@+id/segmentsTextView"
+        app:layout_constraintTop_toTopOf="@+id/recordUpstairsButton" />
+
+    <TextView
+        android:id="@+id/walkingTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        app:layout_constraintBottom_toBottomOf="@+id/recordWalkingButton"
+        app:layout_constraintEnd_toEndOf="@+id/segmentsTextView"
+        app:layout_constraintStart_toStartOf="@+id/segmentsTextView"
+        app:layout_constraintTop_toTopOf="@+id/recordWalkingButton" />
+
+    <TextView
+        android:id="@+id/lossTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="???"
+        app:layout_constraintBottom_toBottomOf="@+id/doTrainingButton"
+        app:layout_constraintEnd_toEndOf="@+id/walkingTextView"
+        app:layout_constraintStart_toStartOf="@+id/walkingTextView"
+        app:layout_constraintTop_toTopOf="@+id/doTrainingButton" />
+
+    <TextView
+        android:id="@+id/lossHeadingTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Loss Value"
+        app:layout_constraintBottom_toTopOf="@+id/doTrainingButton"
+        app:layout_constraintEnd_toEndOf="@+id/walkingTextView"
+        app:layout_constraintStart_toStartOf="@+id/walkingTextView" />
+
+    <Button
+        android:id="@+id/loadButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Load"
+        app:layout_constraintBottom_toBottomOf="@+id/saveButton"
+        app:layout_constraintEnd_toStartOf="@+id/saveButton"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/saveButton" />
+
+    <Button
+        android:id="@+id/saveButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Save"
+        app:layout_constraintBottom_toBottomOf="@+id/stopButton"
+        app:layout_constraintEnd_toStartOf="@+id/stopButton"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/loadButton"
+        app:layout_constraintTop_toTopOf="@+id/stopButton" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
