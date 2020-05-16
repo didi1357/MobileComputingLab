@@ -21,8 +21,9 @@ class HomeFragment : Fragment() {
 
     companion object {
         private val TAG: String? = HomeFragment::class.simpleName
-        lateinit var graphSeriesFormatTF: LineAndPointFormatter
         lateinit var graphSeriesFormatKNN: LineAndPointFormatter
+        lateinit var graphSeriesFormatTL: LineAndPointFormatter
+        lateinit var graphSeriesFormatBM: LineAndPointFormatter
 
         val PLOT_X_LIMIT = 25
 
@@ -40,32 +41,50 @@ class HomeFragment : Fragment() {
         val standingValuesKNN = mutableListOf<Float>()
         val walkingValuesKNN = mutableListOf<Float>()
         val joggingValuesKNN = mutableListOf<Float>()
-        val downstairsValuesTF = mutableListOf<Float>()
-        val upstairsValuesTF = mutableListOf<Float>()
-        val sittingValuesTF = mutableListOf<Float>()
-        val standingValuesTF = mutableListOf<Float>()
-        val walkingValuesTF = mutableListOf<Float>()
-        val joggingValuesTF = mutableListOf<Float>()
-        val timeSeriesDataTF = arrayOf(
-            downstairsValuesTF, upstairsValuesTF,
-            sittingValuesTF, standingValuesTF, walkingValuesTF, joggingValuesTF
-        )
+        val downstairsValuesTL = mutableListOf<Float>()
+        val upstairsValuesTL = mutableListOf<Float>()
+        val sittingValuesTL = mutableListOf<Float>()
+        val standingValuesTL = mutableListOf<Float>()
+        val walkingValuesTL = mutableListOf<Float>()
+        val joggingValuesTL = mutableListOf<Float>()
+        val downstairsValuesBM = mutableListOf<Float>()
+        val upstairsValuesBM = mutableListOf<Float>()
+        val sittingValuesBM = mutableListOf<Float>()
+        val standingValuesBM = mutableListOf<Float>()
+        val walkingValuesBM = mutableListOf<Float>()
+        val joggingValuesBM = mutableListOf<Float>()
         val timeSeriesDataKNN = arrayOf(
             downstairsValuesKNN, upstairsValuesKNN,
             sittingValuesKNN, standingValuesKNN, walkingValuesKNN, joggingValuesKNN
         )
+        val timeSeriesDataTL = arrayOf(
+            downstairsValuesTL, upstairsValuesTL,
+            sittingValuesTL, standingValuesTL, walkingValuesTL, joggingValuesTL
+        )
+        val timeSeriesDataBM = arrayOf(
+            downstairsValuesBM, upstairsValuesBM,
+            sittingValuesBM, standingValuesBM, walkingValuesBM, joggingValuesBM
+        )
 
         val timeAxis = ArrayList<Float>()
 
-        fun pushNewClassificationResult(resultsKNN: ArrayList<Float>, resultsTF: FloatArray) {
+        fun pushNewClassificationResult(
+            resultsKNN: ArrayList<Float>,
+            resultsTL: FloatArray,
+            resultsBM: FloatArray
+        ) {
             for (i in resultsKNN.indices) {
                 timeSeriesDataKNN[i].add(resultsKNN[i])
-                timeSeriesDataTF[i].add(resultsTF[i])
+                timeSeriesDataTL[i].add(resultsTL[i])
+                timeSeriesDataBM[i].add(resultsBM[i])
             }
             if (timeAxis.isEmpty())
                 timeAxis.add(0.0f)
-            else
-                timeAxis.add(timeAxis.last() + MainActivity.DESIRED_WINDOW_MS / 1000.0f)
+            else {
+                var next = timeAxis.last()
+                next += MainActivity.WINDOW_N * MainActivity.APPROX_SENS_VAL_DELAY_MS / 1000.0f
+                timeAxis.add(next)
+            }
 
             updatePlot()
         }
@@ -77,12 +96,18 @@ class HomeFragment : Fragment() {
             val standingSeriesKNN = SimpleXYSeries(timeAxis, standingValuesKNN, "standing")
             val walkingSeriesKNN = SimpleXYSeries(timeAxis, walkingValuesKNN, "walking")
             val joggingSeriesKNN = SimpleXYSeries(timeAxis, joggingValuesKNN, "jogging")
-            val downstairsSeriesTF = SimpleXYSeries(timeAxis, downstairsValuesTF, "downstairs")
-            val upstairsSeriesTF = SimpleXYSeries(timeAxis, upstairsValuesTF, "upstairs")
-            val sittingSeriesTF = SimpleXYSeries(timeAxis, sittingValuesTF, "sitting")
-            val standingSeriesTF = SimpleXYSeries(timeAxis, standingValuesTF, "standing")
-            val walkingSeriesTF = SimpleXYSeries(timeAxis, walkingValuesTF, "walking")
-            val joggingSeriesTF = SimpleXYSeries(timeAxis, joggingValuesTF, "jogging")
+            val downstairsSeriesTF = SimpleXYSeries(timeAxis, downstairsValuesTL, "downstairs")
+            val upstairsSeriesTF = SimpleXYSeries(timeAxis, upstairsValuesTL, "upstairs")
+            val sittingSeriesTF = SimpleXYSeries(timeAxis, sittingValuesTL, "sitting")
+            val standingSeriesTF = SimpleXYSeries(timeAxis, standingValuesTL, "standing")
+            val walkingSeriesTF = SimpleXYSeries(timeAxis, walkingValuesTL, "walking")
+            val joggingSeriesTF = SimpleXYSeries(timeAxis, joggingValuesTL, "jogging")
+            val downstairsSeriesBM = SimpleXYSeries(timeAxis, downstairsValuesBM, "downstairs")
+            val upstairsSeriesBM = SimpleXYSeries(timeAxis, upstairsValuesBM, "upstairs")
+            val sittingSeriesBM = SimpleXYSeries(timeAxis, sittingValuesBM, "sitting")
+            val standingSeriesBM = SimpleXYSeries(timeAxis, standingValuesBM, "standing")
+            val walkingSeriesBM = SimpleXYSeries(timeAxis, walkingValuesBM, "walking")
+            val joggingSeriesBM = SimpleXYSeries(timeAxis, joggingValuesBM, "jogging")
             for (plot in plotArr)
                 plot.clear()
             downstairsPlot.addSeries(downstairsSeriesKNN, graphSeriesFormatKNN)
@@ -91,12 +116,18 @@ class HomeFragment : Fragment() {
             standingPlot.addSeries(standingSeriesKNN, graphSeriesFormatKNN)
             walkingPlot.addSeries(walkingSeriesKNN, graphSeriesFormatKNN)
             joggingPlot.addSeries(joggingSeriesKNN, graphSeriesFormatKNN)
-            downstairsPlot.addSeries(downstairsSeriesTF, graphSeriesFormatTF)
-            upstairsPlot.addSeries(upstairsSeriesTF, graphSeriesFormatTF)
-            sittingPlot.addSeries(sittingSeriesTF, graphSeriesFormatTF)
-            standingPlot.addSeries(standingSeriesTF, graphSeriesFormatTF)
-            walkingPlot.addSeries(walkingSeriesTF, graphSeriesFormatTF)
-            joggingPlot.addSeries(joggingSeriesTF, graphSeriesFormatTF)
+            downstairsPlot.addSeries(downstairsSeriesTF, graphSeriesFormatTL)
+            upstairsPlot.addSeries(upstairsSeriesTF, graphSeriesFormatTL)
+            sittingPlot.addSeries(sittingSeriesTF, graphSeriesFormatTL)
+            standingPlot.addSeries(standingSeriesTF, graphSeriesFormatTL)
+            walkingPlot.addSeries(walkingSeriesTF, graphSeriesFormatTL)
+            joggingPlot.addSeries(joggingSeriesTF, graphSeriesFormatTL)
+            downstairsPlot.addSeries(downstairsSeriesBM, graphSeriesFormatBM)
+            upstairsPlot.addSeries(upstairsSeriesBM, graphSeriesFormatBM)
+            sittingPlot.addSeries(sittingSeriesBM, graphSeriesFormatBM)
+            standingPlot.addSeries(standingSeriesBM, graphSeriesFormatBM)
+            walkingPlot.addSeries(walkingSeriesBM, graphSeriesFormatBM)
+            joggingPlot.addSeries(joggingSeriesBM, graphSeriesFormatBM)
             var lowerLimit = 0.0f
             if (timeAxis.size > PLOT_X_LIMIT)
                 lowerLimit = timeAxis[timeAxis.size - PLOT_X_LIMIT]
@@ -133,7 +164,10 @@ class HomeFragment : Fragment() {
             standingPlot, walkingPlot, joggingPlot
         )
         graphSeriesFormatKNN = LineAndPointFormatter(Color.RED, Color.RED, Color.TRANSPARENT, null)
-        graphSeriesFormatTF = LineAndPointFormatter(Color.BLUE, Color.BLUE, Color.TRANSPARENT, null)
+        graphSeriesFormatTL = LineAndPointFormatter(Color.BLUE, Color.BLUE, Color.TRANSPARENT, null)
+        graphSeriesFormatBM = LineAndPointFormatter(
+            Color.GREEN, Color.GREEN, Color.TRANSPARENT, null
+        )
         return root
     }
 }

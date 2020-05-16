@@ -36,21 +36,50 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
         const val REQUEST_EXTERNAL_STORAGE_PERMISSION = 1
 
-        const val APPROX_SENS_VAL_DELAY_MS = 5.0
+        const val APPROX_SENS_VAL_DELAY_MS = 5.0f
         const val DESIRED_WINDOW_MS = 1200.0f
+
 //        const val WINDOW_N: Int = (DESIRED_WINDOW_MS / APPROX_SENS_VAL_DELAY_MS).toInt()
-        const val WINDOW_N: Int = 80
+        const val WINDOW_N = 23
 
         lateinit var tlHandModel: TransferLearningModelWrapper
         lateinit var tlPocketModel: TransferLearningModelWrapper
         lateinit var tlModels: Array<TransferLearningModelWrapper>
+
+        fun toTfFormattedArray(inputList: ArrayList<SensorValue>): FloatArray {
+            var outputArray = FloatArray(inputList.size * 3)
+            var i = 0
+            while (i < WINDOW_N) {
+                outputArray[i] = inputList[i % 3].x
+                i += 1
+                outputArray[i] = inputList[i % 3].y
+                i += 1
+                outputArray[i] = inputList[i % 3].z
+                i += 1
+            }
+            return outputArray
+        }
     }
 
     private lateinit var sm: SensorManager
     private lateinit var wakeLock: PowerManager.WakeLock
 
     private lateinit var appBarConfiguration: AppBarConfiguration
+    private lateinit var baseModelClassifier: TensorFlowLiteClassifier
 
+    private fun loadBaseModel() {
+        Thread(Runnable {
+            try {
+                baseModelClassifier = TensorFlowLiteClassifier.create(
+                    assets, "TensorFlowLite",
+                    "base_model/converted_base_model.tflite",
+                    "base_model/labels.txt"
+                )
+            } catch (e: Exception) {
+                throw RuntimeException("Error initializing classifiers!", e)
+            }
+        }).start()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,6 +121,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         tlHandModel = TransferLearningModelWrapper(applicationContext)
         tlPocketModel = TransferLearningModelWrapper(applicationContext)
         tlModels = arrayOf(tlHandModel, tlPocketModel)
+        loadBaseModel()
 
         sm = getSystemService(SENSOR_SERVICE) as SensorManager
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -137,20 +167,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             Log.d(TAG, "Accuracy of sensor " + sensor.name + " changed to $accuracy")
     }
 
-    fun toTfFormattedArray(inputList: ArrayList<SensorValue>): FloatArray {
-        var outputArray = FloatArray(inputList.size * 3)
-        var i = 0
-        while (i < WINDOW_N) {
-            outputArray[i] = inputList[i % 3].x
-            i+=1
-            outputArray[i] = inputList[i % 3].y
-            i+=1
-            outputArray[i] = inputList[i % 3].z
-            i+=1
-        }
-        return outputArray
-    }
-
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
             sensorDataList.add(
@@ -166,15 +182,21 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                         //for KNN:
                         val vector = classifier!!.calculateFeatureVector(sensorDataList)
                         val probabilitiesKNN = classifier!!.classify(vector)
-                        //for TF:
-                        var tfFormattedArray = toTfFormattedArray(sensorDataList)
+                        //for TL:
+                        var tfFormattedArray = Companion.toTfFormattedArray(sensorDataList)
                         val predictions = currentModel.predict(tfFormattedArray)
-                        var probabilitiesTF = FloatArray(KNNClassifier.CLASSES.size)
+                        var probabilitiesTL = FloatArray(KNNClassifier.CLASSES.size)
                         for (prediction in predictions) {
                             var knnCompatIndex = KNNClassifier.CLASSES.indexOf(prediction.className)
-                            probabilitiesTF[knnCompatIndex] = prediction.confidence
+                            probabilitiesTL[knnCompatIndex] = prediction.confidence
                         }
-                        HomeFragment.pushNewClassificationResult(probabilitiesKNN, probabilitiesTF)
+                        //for BM:
+                        val probabilitiesBM = baseModelClassifier.recognize(tfFormattedArray)
+                        //push new info:
+                        HomeFragment.pushNewClassificationResult(
+                            probabilitiesKNN, probabilitiesTL,
+                            probabilitiesBM
+                        )
                         sensorDataList.clear()
                     }
                     RecordingFragment.STATE_TRAINING -> {
@@ -193,7 +215,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                         }
                     }
                     RecordingFragment.STATE_RECORDING -> {
-                        val tfFormattedArray = toTfFormattedArray(sensorDataList)
+                        val tfFormattedArray = Companion.toTfFormattedArray(sensorDataList)
                         val curActivity = RecordingFragment.currentRecordingActivity
                         val curActivityString = TransferLearningModelWrapper.CLASSES[curActivity]
                         currentModel.addSample(tfFormattedArray, curActivityString, curActivity)

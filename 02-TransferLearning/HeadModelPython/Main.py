@@ -7,7 +7,7 @@ from tfltransfer import heads
 from tfltransfer import optimizers
 from tfltransfer.tflite_transfer_converter import TFLiteTransferConverter
 
-model_m = load_model('../BaseModelPython/base_model.pbtxt')
+model_m = load_model('../BaseModelPython/base_model.h5')
 model = Model(model_m.input, model_m.get_layer('headlayer').output)
 save_model(model, 'chopped_model.pbtxt', include_optimizer=False, save_format="tf")
 
@@ -19,7 +19,7 @@ learning_rate = 0.001
 batch_size = 20
 l2_rate = 0.0001
 hidden_units = 6
-input_shape = model.get_layer('headlayer').output.shape
+input_shape = (19, 32)
 
 base = bases.SavedModelBase('chopped_model.pbtxt')
 head = tf.keras.Sequential([
@@ -33,7 +33,7 @@ head = tf.keras.Sequential([
     layers.Dense(
         units=num_classes,
         activation="softmax",
-        kernel_regularizer=l2(l2_rate)),
+        kernel_regularizer=l2(l2_rate))
 ])
 
 # Optimizer is ignored by the converter.

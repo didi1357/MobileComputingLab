@@ -28,6 +28,7 @@ INPUT_SHAPE = NUM_SAMPLES_PER_SEGMENT * NUM_SENSORS
 # Hyper-parameters
 BATCH_SIZE = 400
 EPOCHS = 50
+LABELS = ['Downstairs', 'Jogging', 'Sitting', 'Standing', 'Upstairs', 'Walking']
 
 # Load data set containing all the data from csv
 column_names = ['user-id', 'activity', 'timestamp', 'x-axis', 'y-axis', 'z-axis']
@@ -151,19 +152,19 @@ model_m = Sequential()
 model_m.add(InputLayer(input_shape=(NUM_SAMPLES_PER_SEGMENT, NUM_SENSORS)))
 model_m.add(Conv1D(filters=64, kernel_size=3, activation='relu'))
 model_m.add(Dropout(0.2))
-model_m.add(Conv1D(filters=32, kernel_size=3, activation='relu', name='headlayer'))
+model_m.add(Conv1D(filters=32, kernel_size=3, activation='relu', name='headlayer'))  # first idea was to use this as headlayer
 model_m.add(Dropout(0.2))
+
+# and to retrain these in the head model:
 model_m.add(Conv1D(filters=num_classes, kernel_size=3, activation='relu'))
 model_m.add(GlobalAveragePooling1D())
-
-# model_m.add(Reshape((NUM_SENSORS, NUM_SAMPLES_PER_SEGMENT), input_shape=(INPUT_SHAPE,)))
-# model_m.add(Dense(32, activation='relu'))
-# model_m.add(Dropout(0.10))
-# model_m.add(Dense(16, activation='relu'))
-# model_m.add(Dense(8, activation='relu', name="headlayer"))
-# model_m.add(Flatten())
-
 model_m.add(Dense(num_classes, activation='softmax'))
+
+# model_m.add(Conv1D(filters=num_classes*2, kernel_size=3, activation='relu'))
+# model_m.add(Dropout(0.15))
+# model_m.add(Flatten())
+# model_m.add(Dense(2 * num_classes, activation='relu', name='headlayer'))
+# model_m.add(Dense(num_classes, activation='softmax'))
 print(model_m.summary())
 
 model_m.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -184,8 +185,41 @@ plt.ylim([0, 1.5])
 plt.legend()
 plt.show()
 
-# model_m.save('base_model.pbtxt')
-# converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)
-# tflite_model = converter.convert()
-# with open("converted_base_model.tflite", "wb") as file_handle:
-#     file_handle.write(tflite_model)
+
+def show_confusion_matrix(validations, predictions):
+    matrix = metrics.confusion_matrix(validations, predictions)
+    plt.figure(figsize=(6, 4))
+    sns.heatmap(matrix,
+                cmap='coolwarm',
+                linecolor='white',
+                linewidths=1,
+                xticklabels=LABELS,
+                yticklabels=LABELS,
+                annot=True,
+                fmt='d')
+    plt.title('Confusion Matrix')
+    plt.ylabel('True Label')
+    plt.xlabel('Predicted Label')
+    plt.show()
+
+
+# Do normalization of test data:
+df_test['x-axis'] = df_test['x-axis'] / df_test['x-axis'].max()
+df_test['y-axis'] = df_test['y-axis'] / df_test['y-axis'].max()
+df_test['z-axis'] = df_test['z-axis'] / df_test['z-axis'].max()
+df_test = df_test.round({'x-axis': 4, 'y-axis': 4, 'z-axis': 4})
+# Reformat test data and do evaluation:
+x_test, y_test = do_reformatting_github(df_test)
+y_pred_test = model_m.predict(x_test)
+max_y_pred_test = np.argmax(y_pred_test, axis=1)
+max_y_test = np.argmax(y_test, axis=1)
+show_confusion_matrix(max_y_test, max_y_pred_test)
+score = model_m.evaluate(x_test, y_test, verbose=0)
+print('\nAccuracy on test data: %0.2f' % score[1])
+print('\nLoss on test data: %0.2f' % score[0])
+
+model_m.save('base_model.h5')
+converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)
+tflite_model = converter.convert()
+with open("converted_base_model.tflite", "wb") as file_handle:
+    file_handle.write(tflite_model)
