@@ -40,6 +40,7 @@ LABEL = 'ActivityEncoded'
 le = preprocessing.LabelEncoder()
 # Add a new column to the existing DataFrame with the encoded values
 df[LABEL] = le.fit_transform(df['activity'].values.ravel())
+num_classes = le.classes_.size
 
 # Differentiate between test set and training set
 df_test = df[df['user-id'] > 28]
@@ -67,29 +68,18 @@ def create_segments_and_labels(df, time_steps, step, label_name):
         segments.append([xs, ys, zs])
         labels.append(label)
 
-    # Bring the segments into a better shape
-    reshaped_segments = np.asarray(segments, dtype=np.float32).reshape(-1, time_steps, N_FEATURES)
-    labels = np.asarray(labels)
-    return reshaped_segments, labels
+    reshaped_segments = []
+    for segment in segments:
+        reshaped_segments.append(np.transpose(segment))
+    keras_type = np.asarray(reshaped_segments, dtype=np.float32)
+    keras_y = np_utils.to_categorical(np.asarray(labels).astype('float32'), num_classes)
+    return keras_type.astype('float32'), keras_y
 
 
-x_train, y_train = create_segments_and_labels(df_train, TIME_PERIODS, STEP_DISTANCE, LABEL)
-
-# Set input & output dimensions
-num_time_periods, num_sensors = x_train.shape[1], x_train.shape[2]
-num_classes = le.classes_.size
-
-input_shape = (num_time_periods * num_sensors)
-x_train = x_train.reshape(x_train.shape[0], input_shape)
-
-x_train = x_train.astype('float32')
-y_train = y_train.astype('float32')
-
-y_train_hot = np_utils.to_categorical(y_train, num_classes)
+x_train, y_train_hot = create_segments_and_labels(df_train, TIME_PERIODS, STEP_DISTANCE, LABEL)
 
 model_m = Sequential()
-model_m.add(Reshape((TIME_PERIODS, 3), input_shape=(input_shape,)))
-model_m.add(Dense(32, activation='relu'))
+model_m.add(Dense(32, activation='relu', input_shape=(TIME_PERIODS, 3)))
 model_m.add(Dense(16, activation='relu'))
 model_m.add(Dense(8, activation='relu', name="headlayer"))
 model_m.add(Flatten())
