@@ -1,7 +1,11 @@
+import os
+os.environ['PYTHONHASHSEED']=str(1)
 from numpy.random import seed
 seed(1)
-from tensorflow.random import set_seed
-set_seed(2)
+import tensorflow
+tensorflow.random.set_seed(2)
+import random
+random.seed(1)
 
 from matplotlib import pyplot as plt
 
@@ -68,12 +72,9 @@ def create_segments_and_labels(df, time_steps, step, label_name):
         segments.append([xs, ys, zs])
         labels.append(label)
 
-    reshaped_segments = []
-    for segment in segments:
-        reshaped_segments.append(np.transpose(segment))
-    keras_type = np.asarray(reshaped_segments, dtype=np.float32)
+    reshaped_segments = np.asarray(segments, dtype=np.float32).reshape(-1, time_steps, N_FEATURES)
     keras_y = np_utils.to_categorical(np.asarray(labels).astype('float32'), num_classes)
-    return keras_type.astype('float32'), keras_y
+    return reshaped_segments.astype('float32'), keras_y
 
 
 x_train, y_train_hot = create_segments_and_labels(df_train, TIME_PERIODS, STEP_DISTANCE, LABEL)
