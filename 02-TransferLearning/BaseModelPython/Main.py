@@ -19,9 +19,10 @@ from sklearn.preprocessing import StandardScaler
 
 # Preprocessing parameters
 SEGMENT_DURATION_S = 1.2
-DESIRED_INTERSAMPLE_DELAY_MS = 5
-NUM_SAMPLES_PER_SEGMENT = int(np.floor(SEGMENT_DURATION_S / (DESIRED_INTERSAMPLE_DELAY_MS / 1000)))
-STEP_INCREASE_SAMPLES = int(np.floor(NUM_SAMPLES_PER_SEGMENT / 2))  # this controls the overlap of the window
+FREQUENCY_HZ = 20
+NUM_SAMPLES_PER_SEGMENT = int(np.floor(SEGMENT_DURATION_S / (1 / FREQUENCY_HZ)))
+STEP_INCREASE_S = SEGMENT_DURATION_S / 2  # this controls the overlap => e.g. window is always shifted by 2s
+NUM_SAMPLES_PER_STEP_INCREASE = int(np.floor(STEP_INCREASE_S / (1 / FREQUENCY_HZ)))
 NUM_SENSORS = 3
 INPUT_SHAPE = NUM_SAMPLES_PER_SEGMENT * NUM_SENSORS
 # Hyper-parameters
@@ -84,24 +85,20 @@ print(list(le.inverse_transform(range(0, num_classes))))
 df_test = df[df['user-id'] > 28]
 df_train = df[df['user-id'] <= 28]
 
-# Normalize features for training data set
+# # Normalize features for training data set
 pd.options.mode.chained_assignment = None  # default='warn'
 df_train['x-axis'] = df_train['x-axis'] / df_train['x-axis'].max()
 df_train['y-axis'] = df_train['y-axis'] / df_train['y-axis'].max()
 df_train['z-axis'] = df_train['z-axis'] / df_train['z-axis'].max()
+# Round numbers
 df_train = df_train.round({'x-axis': 4, 'y-axis': 4, 'z-axis': 4})
-# Do normalization of test data:
-df_test['x-axis'] = df_test['x-axis'] / df_test['x-axis'].max()
-df_test['y-axis'] = df_test['y-axis'] / df_test['y-axis'].max()
-df_test['z-axis'] = df_test['z-axis'] / df_test['z-axis'].max()
-df_test = df_test.round({'x-axis': 4, 'y-axis': 4, 'z-axis': 4})
 
 
 def do_reformatting_github(data_frame):
     segments = []
     labels = []
     data_frame_test = data_frame.loc[:]
-    for i in range(0, len(data_frame_test) - NUM_SAMPLES_PER_SEGMENT, STEP_INCREASE_SAMPLES):
+    for i in range(0, len(data_frame_test) - NUM_SAMPLES_PER_SEGMENT, NUM_SAMPLES_PER_STEP_INCREASE):
         x_series = data_frame_test['x-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
         y_series = data_frame_test['y-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
         z_series = data_frame_test['z-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
@@ -118,69 +115,56 @@ def do_reformatting_github(data_frame):
     return reshaped_segments, y_data_hot
 
 
-def do_reformatting_didi(data_frame):
+def do_reformatting_by_user_and_activity(data_frame):
     # Reshape data by label/activity:
     segments = []
     labels = []
     for current_activity in data_frame['ActivityEncoded'].unique():
         current_activity_subset = data_frame.loc[data_frame['ActivityEncoded'] == current_activity]
-        for cur_user_id in data_frame['user-id'].unique():
-            current_subset = current_activity_subset.loc[current_activity_subset['user-id'] == cur_user_id]
-            non_null = current_subset.loc[current_subset['timestamp'] != 0]
-            non_double = non_null.drop_duplicates(subset='timestamp')
-            # slice data further by calculating differences:
-            numpy_array = np.array(non_double['timestamp'].values.ravel())
-            if len(numpy_array) > 1:
-                last_element = numpy_array[0]
-                begin_index = 0
-                for i in range(1, len(numpy_array)):
-                    element = numpy_array[i]
-                    difference_ms = abs((element - last_element) / (1000 * 1000))
-                    last_element = element
-                    if difference_ms > 1000 or i == len(numpy_array) - 1:  # new start detected or last element:
-                        current_recording = non_double[begin_index:i]
-                        begin_index = i
-                        current_recording['timestamp'] = pd.to_datetime(current_recording['timestamp'])
-                        current_recording.index = current_recording['timestamp']
-                        # plt.plot(current_recording['x-axis'].values[0:150])
-                        # plt.show()
-                        resample_string = '{}ms'.format(DESIRED_INTERSAMPLE_DELAY_MS)
-                        current_recording = current_recording.resample(resample_string).mean()
-                        # Note: .mean() will create NaN for non-existing (=upsample) entries
-                        current_recording['x-axis'] = current_recording['x-axis'].interpolate()
-                        current_recording['y-axis'] = current_recording['y-axis'].interpolate()
-                        current_recording['z-axis'] = current_recording['z-axis'].interpolate()
-                        current_recording['user-id'] = cur_user_id  # to translate float from mean back to original int
-                        current_recording[LABEL] = current_activity  # to translate float from mean back to original int
-                        # plt.plot(current_recording['x-axis'].values[0:150*22])
-                        # plt.show()
-                        # Do windowing as usual:
-                        for j in range(0, len(current_recording) - NUM_SAMPLES_PER_SEGMENT, STEP_INCREASE_SAMPLES):
-                            x_series = current_recording['x-axis'].values[j: j + NUM_SAMPLES_PER_SEGMENT]
-                            y_series = current_recording['y-axis'].values[j: j + NUM_SAMPLES_PER_SEGMENT]
-                            z_series = current_recording['z-axis'].values[j: j + NUM_SAMPLES_PER_SEGMENT]
-                            segments.append([x_series, y_series, z_series])
-                            labels.append(current_activity)
+        print('current_activity {} has {} entries'.format(current_activity, len(current_activity_subset)))
+        # for cur_user_id in data_frame['user-id'].unique():
+        #     current_subset = current_activity_subset.loc[current_activity_subset['user-id'] == cur_user_id]
+        #     print('with user {} having {} entries'.format(cur_user_id, len(current_subset)))
+        #     for i in range(0, len(current_subset) - NUM_SAMPLES_PER_SEGMENT, NUM_SAMPLES_PER_STEP_INCREASE):
+        #         x_series = current_subset['x-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
+        #         y_series = current_subset['y-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
+        #         z_series = current_subset['z-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
+        #         segments.append([x_series, y_series, z_series])
+        #         labels.append(current_activity)
+        for i in range(0, len(current_activity_subset) - NUM_SAMPLES_PER_SEGMENT, NUM_SAMPLES_PER_STEP_INCREASE):
+            x_series = current_activity_subset['x-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
+            y_series = current_activity_subset['y-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
+            z_series = current_activity_subset['z-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
+            segments.append([x_series, y_series, z_series])
+            labels.append(current_activity)
 
     # Transfer data to numpy format for keras:
-    reshaped_segments = []
-    for segment in segments:
-        reshaped_segments.append(np.transpose(segment))
-    keras_type = np.asarray(reshaped_segments, dtype=np.float32).astype('float32')
+    reshaped_segments_temp = np.asarray(segments, dtype=np.float32).reshape(-1, NUM_SAMPLES_PER_SEGMENT, NUM_SENSORS)
+    # reshaped_segments = reshaped_segments_temp.reshape(reshaped_segments_temp.shape[0], INPUT_SHAPE).astype('float32')
+    reshaped_segments = reshaped_segments_temp.astype('float32')
     y_data_hot = np_utils.to_categorical(np.asarray(labels).astype('float32'), num_classes)
-    return keras_type, y_data_hot
+    return reshaped_segments, y_data_hot
 
 
-x_train, y_train = do_reformatting_didi(df_train)
+x_train, y_train = do_reformatting_github(df_train)
+
 model_m = Sequential()
-model_m.add(Conv1D(filters=128, kernel_size=3, activation='relu', input_shape=(NUM_SAMPLES_PER_SEGMENT, NUM_SENSORS)))
+model_m.add(InputLayer(input_shape=(NUM_SAMPLES_PER_SEGMENT, NUM_SENSORS)))
+model_m.add(Conv1D(filters=64, kernel_size=3, activation='relu'))
 model_m.add(Dropout(0.2))
-model_m.add(MaxPooling1D(pool_size=2))
-model_m.add(Conv1D(filters=16, kernel_size=3, activation='relu', name='headlayer'))
+model_m.add(Conv1D(filters=32, kernel_size=3, activation='relu', name='headlayer'))  # first idea was to use this as headlayer
 model_m.add(Dropout(0.2))
+
+# and to retrain these in the head model:
 model_m.add(Conv1D(filters=num_classes, kernel_size=3, activation='relu'))
 model_m.add(GlobalAveragePooling1D())
 model_m.add(Dense(num_classes, activation='softmax'))
+
+# model_m.add(Conv1D(filters=num_classes*2, kernel_size=3, activation='relu'))
+# model_m.add(Dropout(0.15))
+# model_m.add(Flatten())
+# model_m.add(Dense(2 * num_classes, activation='relu', name='headlayer'))
+# model_m.add(Dense(num_classes, activation='softmax'))
 print(model_m.summary())
 
 model_m.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -219,8 +203,13 @@ def show_confusion_matrix(validations, predictions):
     plt.show()
 
 
+# Do normalization of test data:
+df_test['x-axis'] = df_test['x-axis'] / df_test['x-axis'].max()
+df_test['y-axis'] = df_test['y-axis'] / df_test['y-axis'].max()
+df_test['z-axis'] = df_test['z-axis'] / df_test['z-axis'].max()
+df_test = df_test.round({'x-axis': 4, 'y-axis': 4, 'z-axis': 4})
 # Reformat test data and do evaluation:
-x_test, y_test = do_reformatting_didi(df_test)
+x_test, y_test = do_reformatting_github(df_test)
 y_pred_test = model_m.predict(x_test)
 max_y_pred_test = np.argmax(y_pred_test, axis=1)
 max_y_test = np.argmax(y_test, axis=1)
@@ -229,8 +218,8 @@ score = model_m.evaluate(x_test, y_test, verbose=0)
 print('\nAccuracy on test data: %0.2f' % score[1])
 print('\nLoss on test data: %0.2f' % score[0])
 
-# model_m.save('base_model.h5')
-# converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)
-# tflite_model = converter.convert()
-# with open("converted_base_model.tflite", "wb") as file_handle:
-#     file_handle.write(tflite_model)
+model_m.save('base_model.h5')
+converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)
+tflite_model = converter.convert()
+with open("converted_base_model.tflite", "wb") as file_handle:
+    file_handle.write(tflite_model)
