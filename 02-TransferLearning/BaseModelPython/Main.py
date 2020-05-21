@@ -18,7 +18,7 @@ from keras.utils import np_utils
 from sklearn.preprocessing import StandardScaler
 
 # Preprocessing parameters
-SEGMENT_DURATION_S = 1.2
+SEGMENT_DURATION_S = 4
 FREQUENCY_HZ = 20
 NUM_SAMPLES_PER_SEGMENT = int(np.floor(SEGMENT_DURATION_S / (1 / FREQUENCY_HZ)))
 STEP_INCREASE_S = SEGMENT_DURATION_S / 2  # this controls the overlap => e.g. window is always shifted by 2s
@@ -108,37 +108,6 @@ def do_reformatting_github(data_frame):
         labels.append(label)
 
     # Bring the segments into a better shape
-    reshaped_segments_temp = np.asarray(segments, dtype=np.float32).reshape(-1, NUM_SAMPLES_PER_SEGMENT, NUM_SENSORS)
-    # reshaped_segments = reshaped_segments_temp.reshape(reshaped_segments_temp.shape[0], INPUT_SHAPE).astype('float32')
-    reshaped_segments = reshaped_segments_temp.astype('float32')
-    y_data_hot = np_utils.to_categorical(np.asarray(labels).astype('float32'), num_classes)
-    return reshaped_segments, y_data_hot
-
-
-def do_reformatting_by_user_and_activity(data_frame):
-    # Reshape data by label/activity:
-    segments = []
-    labels = []
-    for current_activity in data_frame['ActivityEncoded'].unique():
-        current_activity_subset = data_frame.loc[data_frame['ActivityEncoded'] == current_activity]
-        print('current_activity {} has {} entries'.format(current_activity, len(current_activity_subset)))
-        # for cur_user_id in data_frame['user-id'].unique():
-        #     current_subset = current_activity_subset.loc[current_activity_subset['user-id'] == cur_user_id]
-        #     print('with user {} having {} entries'.format(cur_user_id, len(current_subset)))
-        #     for i in range(0, len(current_subset) - NUM_SAMPLES_PER_SEGMENT, NUM_SAMPLES_PER_STEP_INCREASE):
-        #         x_series = current_subset['x-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
-        #         y_series = current_subset['y-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
-        #         z_series = current_subset['z-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
-        #         segments.append([x_series, y_series, z_series])
-        #         labels.append(current_activity)
-        for i in range(0, len(current_activity_subset) - NUM_SAMPLES_PER_SEGMENT, NUM_SAMPLES_PER_STEP_INCREASE):
-            x_series = current_activity_subset['x-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
-            y_series = current_activity_subset['y-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
-            z_series = current_activity_subset['z-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
-            segments.append([x_series, y_series, z_series])
-            labels.append(current_activity)
-
-    # Transfer data to numpy format for keras:
     reshaped_segments_temp = np.asarray(segments, dtype=np.float32).reshape(-1, NUM_SAMPLES_PER_SEGMENT, NUM_SENSORS)
     # reshaped_segments = reshaped_segments_temp.reshape(reshaped_segments_temp.shape[0], INPUT_SHAPE).astype('float32')
     reshaped_segments = reshaped_segments_temp.astype('float32')

@@ -19,7 +19,7 @@ learning_rate = 0.001
 batch_size = 20
 l2_rate = 0.0001
 hidden_units = 6
-input_shape = (19, 32)
+input_shape = (model.output_shape[1], model.output_shape[2])  # [0] contains batch size None...
 
 base = bases.SavedModelBase('chopped_model.pbtxt')
 head = tf.keras.Sequential([

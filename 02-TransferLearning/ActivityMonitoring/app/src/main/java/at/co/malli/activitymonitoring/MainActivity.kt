@@ -36,11 +36,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
         const val REQUEST_EXTERNAL_STORAGE_PERMISSION = 1
 
-        const val APPROX_SENS_VAL_DELAY_MS = 5.0f
-        const val DESIRED_WINDOW_MS = 1200.0f
+        const val APPROX_SENS_VAL_DELAY_MS = 50.0f
+        const val DESIRED_WINDOW_MS = 4000.0f
 
-//        const val WINDOW_N: Int = (DESIRED_WINDOW_MS / APPROX_SENS_VAL_DELAY_MS).toInt()
-        const val WINDOW_N = 23
+        const val WINDOW_N: Int = (DESIRED_WINDOW_MS / APPROX_SENS_VAL_DELAY_MS).toInt()
 
         lateinit var tlHandModel: TransferLearningModelWrapper
         lateinit var tlPocketModel: TransferLearningModelWrapper
@@ -118,6 +117,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
         classifier = KNNClassifier(applicationContext.assets.open("windowed.json"))
 
+        Log.v(TAG, "WINDOW_N is $WINDOW_N!")
         tlHandModel = TransferLearningModelWrapper(applicationContext)
         tlPocketModel = TransferLearningModelWrapper(applicationContext)
         tlModels = arrayOf(tlHandModel, tlPocketModel)
@@ -130,7 +130,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             "MyApp::MyWakelockTag"
         )
         val accelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        sm.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST)
+        sm.registerListener(this, accelerometer, (APPROX_SENS_VAL_DELAY_MS * 1000).toInt())
         wakeLock.acquire()
     }
 
@@ -183,7 +183,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                         val vector = classifier!!.calculateFeatureVector(sensorDataList)
                         val probabilitiesKNN = classifier!!.classify(vector)
                         //for TL:
-                        var tfFormattedArray = Companion.toTfFormattedArray(sensorDataList)
+                        var tfFormattedArray = toTfFormattedArray(sensorDataList)
                         val predictions = currentModel.predict(tfFormattedArray)
                         var probabilitiesTL = FloatArray(KNNClassifier.CLASSES.size)
                         for (prediction in predictions) {
