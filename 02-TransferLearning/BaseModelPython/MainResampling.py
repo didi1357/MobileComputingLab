@@ -119,15 +119,17 @@ def do_reformatting_github(data_frame):
 
 def do_resampling_by_user_activity(data_frame):
     # Interpolate data by user and activity:
-    new_frame = pd.DataFrame(columns=column_names)
+    segments = []
+    labels = []
     for current_activity in data_frame['ActivityEncoded'].unique():
         current_activity_subset = data_frame.loc[data_frame['ActivityEncoded'] == current_activity]
         for cur_user_id in data_frame['user-id'].unique():
             current_subset = current_activity_subset.loc[current_activity_subset['user-id'] == cur_user_id]
             non_null = current_subset.loc[current_subset['timestamp'] != 0]
             non_double = non_null.drop_duplicates(subset='timestamp')
+            sorted_data = non_double.sort_values(by='timestamp')
             # slice data further by calculating differences:
-            numpy_array = np.array(non_double['timestamp'].values.ravel())
+            numpy_array = np.array(sorted_data['timestamp'].values.ravel())
             if len(numpy_array) > 1:
                 last_element = numpy_array[0]
                 begin_index = 0
@@ -136,7 +138,7 @@ def do_resampling_by_user_activity(data_frame):
                     difference_ms = abs((element - last_element) / (1000 * 1000))
                     last_element = element
                     if difference_ms > 1000 or i == len(numpy_array) - 1:  # new start detected or last element:
-                        current_recording = non_double[begin_index:i]
+                        current_recording = sorted_data[begin_index:i]
                         begin_index = i
                         current_recording['timestamp'] = pd.to_datetime(current_recording['timestamp'])
                         current_recording.index = current_recording['timestamp']
@@ -153,25 +155,12 @@ def do_resampling_by_user_activity(data_frame):
                         # plt.plot(current_recording['x-axis'].values[0:150*22])
                         # plt.show()
                         # Do windowing as usual:
-                        # for j in range(0, len(current_recording) - NUM_SAMPLES_PER_SEGMENT, STEP_INCREASE_SAMPLES):
-                        #     x_series = current_recording['x-axis'].values[j: j + NUM_SAMPLES_PER_SEGMENT]
-                        #     y_series = current_recording['y-axis'].values[j: j + NUM_SAMPLES_PER_SEGMENT]
-                        #     z_series = current_recording['z-axis'].values[j: j + NUM_SAMPLES_PER_SEGMENT]
-                        #     segments.append([x_series, y_series, z_series])
-                        #     labels.append(current_activity)
-                        new_frame = pd.concat([new_frame, current_recording], ignore_index=True)
-
-    # # Reshape data:
-    segments = []
-    labels = []
-    for i in range(0, len(new_frame) - NUM_SAMPLES_PER_SEGMENT, STEP_INCREASE_SAMPLES):
-        xs = new_frame['x-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
-        ys = new_frame['y-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
-        zs = new_frame['z-axis'].values[i: i + NUM_SAMPLES_PER_SEGMENT]
-        # Retrieve the most often used label in this segment
-        label = stats.mode(new_frame[LABEL][i: i + NUM_SAMPLES_PER_SEGMENT])[0][0]
-        segments.append([xs, ys, zs])
-        labels.append(label)
+                        for j in range(0, len(current_recording) - NUM_SAMPLES_PER_SEGMENT, STEP_INCREASE_SAMPLES):
+                            x_series = current_recording['x-axis'].values[j: j + NUM_SAMPLES_PER_SEGMENT]
+                            y_series = current_recording['y-axis'].values[j: j + NUM_SAMPLES_PER_SEGMENT]
+                            z_series = current_recording['z-axis'].values[j: j + NUM_SAMPLES_PER_SEGMENT]
+                            segments.append([x_series, y_series, z_series])
+                            labels.append(current_activity)
 
     # Transfer data to numpy format for keras:
     keras_type = np.asarray(segments, dtype=np.float32).reshape(-1, NUM_SAMPLES_PER_SEGMENT, NUM_SENSORS)  # transpose!
@@ -236,7 +225,7 @@ def do_resampling_plain(data_frame):
     return keras_type.astype('float32'), y_data_hot
 
 
-x_train, y_train = do_resampling_plain(df_train)
+x_train, y_train = do_resampling_by_user_activity(df_train)
 print('Shape of x_train: {}'.format(x_train.shape))
 
 model_m = Sequential()
@@ -286,7 +275,7 @@ def show_confusion_matrix(validations, predictions):
 
 
 # Reformat test data and do evaluation:
-x_test, y_test = do_resampling_plain(df_test)
+x_test, y_test = do_resampling_by_user_activity(df_test)
 y_pred_test = model_m.predict(x_test)
 max_y_pred_test = np.argmax(y_pred_test, axis=1)
 max_y_test = np.argmax(y_test, axis=1)
@@ -295,8 +284,8 @@ score = model_m.evaluate(x_test, y_test, verbose=0)
 print('\nAccuracy on test data: %0.2f' % score[1])
 print('\nLoss on test data: %0.2f' % score[0])
 
-model_m.save('base_model.h5')
-converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)
-tflite_model = converter.convert()
-with open("converted_base_model.tflite", "wb") as file_handle:
-    file_handle.write(tflite_model)
+# model_m.save('base_model.h5')
+# converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)
+# tflite_model = converter.convert()
+# with open("converted_base_model.tflite", "wb") as file_handle:
+#     file_handle.write(tflite_model)
