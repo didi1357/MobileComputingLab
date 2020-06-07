@@ -8,16 +8,21 @@ import random
 random.seed(1)
 
 from matplotlib import pyplot as plt
-
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from scipy import stats
 
+from sklearn import metrics
+from sklearn.metrics import classification_report
 from sklearn import preprocessing
 
+import tensorflow
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Flatten, Reshape
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Reshape
+from tensorflow.keras.layers import Conv2D, MaxPooling2D
 from keras.utils import np_utils
+
 
 # Same labels will be reused throughout the program
 LABELS = ['Downstairs', 'Jogging', 'Sitting', 'Standing', 'Upstairs', 'Walking']
@@ -121,6 +126,52 @@ plt.xlabel('Training Epoch')
 plt.ylim(0)
 plt.legend()
 plt.show()
+
+
+# Evaluate on test data:
+df_test['x-axis'] = df_test['x-axis'] / df_test['x-axis'].max()
+df_test['y-axis'] = df_test['y-axis'] / df_test['y-axis'].max()
+df_test['z-axis'] = df_test['z-axis'] / df_test['z-axis'].max()
+df_test = df_test.round({'x-axis': 4, 'y-axis': 4, 'z-axis': 4})
+x_test, y_test = create_segments_and_labels(df_test,
+                                            TIME_PERIODS,
+                                            STEP_DISTANCE,
+                                            LABEL)
+# Set input_shape / reshape for Keras
+x_test = x_test.reshape(x_test.shape[0], input_shape)
+x_test = x_test.astype('float32')
+y_test = y_test.astype('float32')
+y_test = np_utils.to_categorical(y_test, num_classes)
+score = model_m.evaluate(x_test, y_test, verbose=0)
+print('\nAccuracy on test data: %0.2f' % score[1])
+print('\nLoss on test data: %0.2f' % score[0])
+
+
+def show_confusion_matrix(validations, predictions):
+
+    matrix = metrics.confusion_matrix(validations, predictions)
+    plt.figure(figsize=(6, 4))
+    sns.heatmap(matrix,
+                cmap='coolwarm',
+                linecolor='white',
+                linewidths=1,
+                xticklabels=LABELS,
+                yticklabels=LABELS,
+                annot=True,
+                fmt='d')
+    plt.title('Confusion Matrix')
+    plt.ylabel('True Label')
+    plt.xlabel('Predicted Label')
+    plt.show()
+
+
+y_pred_test = model_m.predict(x_test)
+# Take the class with the highest probability from the test predictions
+max_y_pred_test = np.argmax(y_pred_test, axis=1)
+max_y_test = np.argmax(y_test, axis=1)
+
+show_confusion_matrix(max_y_test, max_y_pred_test)
+
 
 # model_m.save('base_model_github.pbtxt')
 # converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)

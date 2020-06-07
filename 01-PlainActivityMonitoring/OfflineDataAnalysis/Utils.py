@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import json
 import math
+import os
 
 from sklearn.neighbors import KNeighborsClassifier
 
@@ -168,8 +169,8 @@ def prepare_classification_result_plot(trained_classifier, test_file_path, test_
     all_probabilities = trained_classifier.predict_proba(test_vectors)
     transposed_probabilities = np.transpose(all_probabilities)
     window_nr = range(len(all_probabilities))
-    fig, ((ax1, ax4), (ax2, ax5), (ax3, ax6)) = plt.subplots(3, 2)
-    fig.suptitle('Probabilities for {} with {} classifier'.format(test_file_path, classifier_name))
+    fig, ((ax1, ax4), (ax2, ax5), (ax3, ax6)) = plt.subplots(3, 2, constrained_layout=True)
+    fig.suptitle('Probabilities for {} with {} classifier'.format(os.path.basename(test_file_path), classifier_name))
     ax1.plot(window_nr, transposed_probabilities[0])
     ax1.set_title(CLASSES[0])
     ax2.plot(window_nr, transposed_probabilities[1])

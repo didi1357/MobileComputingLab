@@ -187,8 +187,8 @@ score = model_m.evaluate(x_test, y_test, verbose=0)
 print('\nAccuracy on test data: %0.2f' % score[1])
 print('\nLoss on test data: %0.2f' % score[0])
 
-model_m.save('base_model.h5')
-converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)
-tflite_model = converter.convert()
-with open("converted_base_model.tflite", "wb") as file_handle:
-    file_handle.write(tflite_model)
+# model_m.save('base_model.h5')
+# converter = tensorflow.lite.TFLiteConverter.from_keras_model(model_m)
+# tflite_model = converter.convert()
+# with open("converted_base_model.tflite", "wb") as file_handle:
+#     file_handle.write(tflite_model)

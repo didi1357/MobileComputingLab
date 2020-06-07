@@ -23,4 +23,4 @@ for classifier_name, classifier in {'unwindowed': unwindowed_classifier, 'window
     for test_class in CLASSES:
         current_test_file = 'preprocessed/{}_3.csv'.format(test_class)
         prepare_classification_result_plot(classifier, current_test_file, TEST_WINDOW_TIME_S, classifier_name)
-        plt.savefig('classification_results/{}_{}.png'.format(test_class, classifier_name))
+        plt.savefig('classification_results/{}_{}.eps'.format(test_class, classifier_name))

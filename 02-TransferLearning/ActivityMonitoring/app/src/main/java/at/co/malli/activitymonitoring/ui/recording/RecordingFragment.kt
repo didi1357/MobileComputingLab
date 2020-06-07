@@ -16,6 +16,8 @@ import at.co.malli.activitymonitoring.MainActivity.Companion.sensorDataList
 import at.co.malli.activitymonitoring.R
 import at.co.malli.activitymonitoring.TransferLearningModelWrapper
 import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
 
 
 class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedChangeListener {
@@ -30,6 +32,7 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
             walkingTV.text = "${currentModel.getSegmentCount(ACTIVITY_WALKING)}"
         }
 
+        var fOutStream: OutputStreamWriter? = null
         private val TAG: String? = RecordingFragment::class.simpleName
 
         const val ACTIVITY_INVALID = -1
@@ -44,6 +47,7 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
         const val STATE_STOPPED = 0
         const val STATE_RECORDING = 1
         const val STATE_TRAINING = 2
+        const val STATE_LOG = 3
         var currentState: Int = STATE_STOPPED
 
         const val POSITION_HAND = 0
@@ -60,6 +64,7 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
         lateinit var stopBut: Button
         lateinit var loadBut: Button
         lateinit var saveBut: Button
+        lateinit var logBut: Button
         lateinit var downstairsTV: TextView
         lateinit var joggingTV: TextView
         lateinit var sittingTV: TextView
@@ -90,6 +95,7 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
         stopBut = rootView.findViewById(R.id.stopButton) as Button
         loadBut = rootView.findViewById(R.id.loadButton) as Button
         saveBut = rootView.findViewById(R.id.saveButton) as Button
+        logBut = rootView.findViewById(R.id.logButton) as Button
         downstairsTV = rootView.findViewById(R.id.downstairsTextView) as TextView
         joggingTV = rootView.findViewById(R.id.joggingTextView) as TextView
         sittingTV = rootView.findViewById(R.id.sittingTextView) as TextView
@@ -107,6 +113,7 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
         stopBut.setOnClickListener(this)
         loadBut.setOnClickListener(this)
         saveBut.setOnClickListener(this)
+        logBut.setOnClickListener(this)
 
         positionRG.setOnCheckedChangeListener(this)
 
@@ -126,8 +133,15 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
             R.id.doTrainingButton -> doTraining()
             R.id.loadButton -> loadPressed()
             R.id.saveButton -> savePressed()
+            R.id.logButton -> logPressed()
             R.id.stopButton -> stopPressed()
         }
+    }
+
+    private fun logPressed() {
+        Log.v(TAG, "logPressed")
+        applyStateUI(STATE_LOG)
+        sensorDataList.clear() //TODO: locking on sensorDataList?
     }
 
     private fun loadPressed() {
@@ -157,6 +171,7 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
                 trainingBut.isEnabled = true
                 positionRG.isEnabled = true
                 stopBut.isEnabled = false
+                logBut.isEnabled = true
             }
             STATE_RECORDING -> {
                 downstairsBut.isEnabled = false
@@ -168,6 +183,7 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
                 trainingBut.isEnabled = false
                 positionRG.isEnabled = false
                 stopBut.isEnabled = true
+                logBut.isEnabled = false
             }
             STATE_TRAINING -> {
                 downstairsBut.isEnabled = false
@@ -179,6 +195,19 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
                 trainingBut.isEnabled = false
                 positionRG.isEnabled = false
                 stopBut.isEnabled = true
+                logBut.isEnabled = false
+            }
+            STATE_LOG -> {
+                downstairsBut.isEnabled = false
+                joggingBut.isEnabled = false
+                sittingBut.isEnabled = false
+                standingBut.isEnabled = false
+                upstairsBut.isEnabled = false
+                walkingBut.isEnabled = false
+                trainingBut.isEnabled = false
+                positionRG.isEnabled = false
+                stopBut.isEnabled = true
+                logBut.isEnabled = false
             }
         }
     }
@@ -199,6 +228,14 @@ class RecordingFragment : Fragment(), View.OnClickListener, RadioGroup.OnChecked
         Log.v(TAG, "stopPressed")
         if(currentState == STATE_TRAINING)
             MainActivity.tlModels[currentPositionSelection].disableTraining()
+
+        if(currentState == STATE_LOG) {
+            fOutStream?.flush()
+            fOutStream?.close()
+            fOutStream = null
+            Log.v(TAG, "closed log output stream!")
+        }
+
         applyStateUI(STATE_STOPPED)
     }
 

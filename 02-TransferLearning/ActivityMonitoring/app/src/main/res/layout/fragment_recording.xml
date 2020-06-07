@@ -113,7 +113,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/saveButton"
+        app:layout_constraintStart_toEndOf="@+id/logButton"
         app:layout_constraintTop_toBottomOf="@+id/positionRadioGroup" />
 
     <TextView
@@ -228,7 +228,8 @@
         app:layout_constraintEnd_toStartOf="@+id/saveButton"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/saveButton" />
+        app:layout_constraintTop_toTopOf="@+id/saveButton"
+        app:layout_constraintVertical_bias="0.0" />
 
     <Button
         android:id="@+id/saveButton"
@@ -236,9 +237,22 @@
         android:layout_height="wrap_content"
         android:text="Save"
         app:layout_constraintBottom_toBottomOf="@+id/stopButton"
-        app:layout_constraintEnd_toStartOf="@+id/stopButton"
+        app:layout_constraintEnd_toStartOf="@+id/logButton"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/loadButton"
-        app:layout_constraintTop_toTopOf="@+id/stopButton" />
+        app:layout_constraintTop_toTopOf="@+id/stopButton"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <Button
+        android:id="@+id/logButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Log"
+        app:layout_constraintBottom_toBottomOf="@+id/saveButton"
+        app:layout_constraintEnd_toStartOf="@+id/stopButton"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/saveButton"
+        app:layout_constraintTop_toTopOf="@+id/saveButton"
+        app:layout_constraintVertical_bias="0.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

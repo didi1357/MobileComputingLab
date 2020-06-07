@@ -24,6 +24,8 @@ import at.co.malli.activitymonitoring.ui.home.HomeFragment
 import at.co.malli.activitymonitoring.ui.recording.RecordingFragment
 import com.google.android.material.navigation.NavigationView
 import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
 
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
@@ -167,6 +169,40 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             Log.d(TAG, "Accuracy of sensor " + sensor.name + " changed to $accuracy")
     }
 
+    private fun argmax(array: FloatArray): Int {
+        var maxP = 0.0f
+        var maxI = 0
+        for (i in array.indices) {
+            if (array[i] > maxP) {
+                maxI = i
+                maxP = array[i]
+            }
+        }
+        return maxI
+    }
+
+    private fun storeLog(
+        resultsKNN: ArrayList<Float>,
+        resultsTL: FloatArray,
+        resultsBM: FloatArray
+    ) {
+        if (RecordingFragment.fOutStream == null) {
+            val lastTimestamp = sensorDataList[sensorDataList.lastIndex].timestamp
+            val logFilePath = File(
+                externalFilesDir,
+                "${RecordingFragment.currentPositionSelection}.${lastTimestamp}.log"
+            )
+            RecordingFragment.fOutStream = OutputStreamWriter(FileOutputStream(logFilePath))
+            Log.v(TAG, "Opened file for writing: $logFilePath")
+        }
+        for (data in sensorDataList) {
+            val str = "${data.timestamp}, ${data.x}, ${data.y}, ${data.z}, " +
+                    "${argmax(resultsKNN.toFloatArray())}, ${argmax(resultsTL)}, " +
+                    "${argmax(resultsBM)}\n"
+            RecordingFragment.fOutStream!!.write(str)
+        }
+    }
+
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
             sensorDataList.add(
@@ -177,7 +213,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             if (sensorDataList.size >= WINDOW_N) {
                 val currentModel = tlModels[RecordingFragment.currentPositionSelection]
                 when (RecordingFragment.currentState) {
-                    RecordingFragment.STATE_STOPPED -> {
+                    RecordingFragment.STATE_STOPPED, RecordingFragment.STATE_LOG -> {
                         //run calculations to update plots only if not recording :)
                         //for KNN:
                         val vector = classifier!!.calculateFeatureVector(sensorDataList)
@@ -192,11 +228,23 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                         }
                         //for BM:
                         val probabilitiesBM = baseModelClassifier.recognize(tfFormattedArray)
+                        //is in downstairs, jogging, sitting, standing, upstairs, walking
+                        //should be downstairs, upstairs, sitting, standing, walking, jogging
+                        var reorderedBM = FloatArray(6)
+                        reorderedBM[0] = probabilitiesBM[0]
+                        reorderedBM[1] = probabilitiesBM[4]
+                        reorderedBM[2] = probabilitiesBM[2]
+                        reorderedBM[3] = probabilitiesBM[3]
+                        reorderedBM[4] = probabilitiesBM[5]
+                        reorderedBM[5] = probabilitiesBM[1]
                         //push new info:
                         HomeFragment.pushNewClassificationResult(
                             probabilitiesKNN, probabilitiesTL,
-                            probabilitiesBM
+                            reorderedBM
                         )
+                        if (RecordingFragment.currentState == RecordingFragment.STATE_LOG) {
+                            storeLog(probabilitiesKNN, probabilitiesTL, reorderedBM)
+                        }
                         sensorDataList.clear()
                     }
                     RecordingFragment.STATE_TRAINING -> {
